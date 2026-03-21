@@ -21,7 +21,7 @@
             color: #f8fafc;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
-            user-select: none; /* Basic prevention of text selection */
+            user-select: none;
         }
         
         .glass {
@@ -158,8 +158,8 @@
         import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
         // ================= CONFIGURATION =================
-        const GOOGLE_CLIENT_ID = "30172584711-9l229pscpqpf478qvtp2ronplmbrtha0.apps.googleusercontent.com"; // REQUIRED
-        const GEMINI_API_KEY = "AIzaSyCm0_qabzPi2CLXHeRC56ksRxLfq37pqMU"; // REQUIRED
+        const GOOGLE_CLIENT_ID = "30172584711-9l229pscpqpf478qvtp2ronplmbrtha0.apps.googleusercontent.com"; 
+        const GEMINI_API_KEY = "AIzaSyCm0_qabzPi2CLXHeRC56ksRxLfq37pqMU"; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyDPVa0eYZpxYh6Q5vyhSf0IogTkedc72tE",
@@ -170,7 +170,6 @@
             appId: "1:727149843542:web:42037d523dea9c7f0797f7"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
@@ -184,7 +183,7 @@
         // ================= STATE =================
         let accessToken = null;
         let currentUser = null;
-        let currentTab = 'inbox'; // inbox, important, spam
+        let currentTab = 'inbox'; 
         let allEmails = [];
         let spamKeywords = ['winner', 'lottery', 'viagra', 'earn money fast', 'prince', 'crypto', 'giveaway'];
         let markedSenders = [];
@@ -193,14 +192,12 @@
         let longPressTimer;
         let selectedEmailId = null;
 
-        // ================= SECURITY =================
         document.addEventListener('contextmenu', event => event.preventDefault());
 
         // ================= GOOGLE AUTHENTICATION =================
         let tokenClient;
 
         window.onload = () => {
-            // Init Google Identity Services Token Client
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: GOOGLE_CLIENT_ID,
                 scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/gmail.readonly',
@@ -217,7 +214,6 @@
                 accessToken = response.access_token;
                 
                 try {
-                    // Fetch User Profile
                     const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                         headers: { Authorization: `Bearer ${accessToken}` }
                     });
@@ -231,7 +227,6 @@
 
                     document.getElementById('user-email-display').innerText = currentUser.email;
                     
-                    // Switch UI
                     document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
                     setTimeout(() => {
                         document.getElementById('login-screen').classList.add('hidden');
@@ -250,20 +245,18 @@
         async function initApp() {
             await loadUserSettings();
             requestPushNotifications();
-            await loadEmailsFromFirestore(); // Load cached quickly
-            syncGmail(); // Fetch new
+            await loadEmailsFromFirestore();
+            syncGmail(); 
         }
 
         async function loadUserSettings() {
             try {
-                // Load Spam Keywords
                 const spamRef = doc(db, "users", currentUser.email, "settings", "spam_keywords");
                 const spamSnap = await getDoc(spamRef);
                 if (spamSnap.exists() && spamSnap.data().keywords) {
                     spamKeywords = spamSnap.data().keywords;
                 }
 
-                // Load Marked Senders
                 const markRef = doc(db, "users", currentUser.email, "settings", "marked_senders");
                 const markSnap = await getDoc(markRef);
                 if (markSnap.exists() && markSnap.data().senders) {
@@ -283,7 +276,6 @@
             showSync(true);
 
             try {
-                // Fetch list of messages
                 const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=15', {
                     headers: { Authorization: `Bearer ${accessToken}` }
                 });
@@ -300,31 +292,22 @@
                 }
 
                 for (let msg of listData.messages) {
-                    // Check if already in Firestore
                     const docRef = doc(db, "users", currentUser.email, "emails", msg.id);
                     const docSnap = await getDoc(docRef);
                     
                     if (!docSnap.exists()) {
-                        // Fetch full email details
                         const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
                             headers: { Authorization: `Bearer ${accessToken}` }
                         });
                         const detailData = await detailRes.json();
                         
-                        if (!detailRes.ok) {
-                            console.warn("Failed to fetch details for msg:", msg.id);
-                            continue;
-                        }
+                        if (!detailRes.ok) continue;
 
                         const parsedEmail = parseGmailMessage(detailData);
-                        
-                        // Categorize Email via Smart Filters
                         parsedEmail.category = categorizeEmail(parsedEmail);
 
-                        // Save to Firestore
                         await setDoc(docRef, parsedEmail);
 
-                        // If important, simulate notification
                         if (parsedEmail.category === 'important') {
                             triggerLocalNotification("Important Email", parsedEmail.subject);
                         }
@@ -334,7 +317,7 @@
                 await loadEmailsFromFirestore();
             } catch(e) {
                 console.error("Sync error details:", e);
-                alert("Sync Error: " + e.message); // This will show the EXACT reason now
+                alert("Sync Error: " + e.message); 
             }
             
             showSync(false);
@@ -354,18 +337,13 @@
                 });
             }
 
-            // Extract Body (Base64 Decode)
             let body = "No text content available.";
             if (message.payload) {
                 if (message.payload.parts) {
-                    // Find text/plain part directly
                     let part = message.payload.parts.find(p => p.mimeType === 'text/plain');
-                    
-                    // Sometimes parts are nested deeper inside multipart/alternative
                     if(!part && message.payload.parts[0]?.parts) {
                         part = message.payload.parts[0].parts.find(p => p.mimeType === 'text/plain');
                     }
-                    
                     if (part && part.body && part.body.data) {
                         body = decodeBase64(part.body.data);
                     }
@@ -374,7 +352,6 @@
                 }
             }
 
-            // Extract pure email safely
             let pureEmail = sender.toLowerCase();
             try {
                 const emailMatch = sender.match(/<([^>]+)>/);
@@ -390,9 +367,9 @@
                 sender: sender,
                 pureEmail: pureEmail,
                 subject: subject,
-                body: body.substring(0, 2000), // truncate for DB limits
+                body: body.substring(0, 2000), 
                 timestamp: new Date(dateStr).getTime() || Date.now(),
-                category: 'inbox' // default
+                category: 'inbox'
             };
         }
 
@@ -405,17 +382,12 @@
 
         function categorizeEmail(emailObj) {
             const textToSearch = (emailObj.subject + " " + emailObj.body).toLowerCase();
-            
-            // 1. Spam Check
             for(let word of spamKeywords) {
                 if(textToSearch.includes(word.toLowerCase())) return 'spam';
             }
-
-            // 2. Important Check
             for(let domain of companyDomains) {
                 if(emailObj.pureEmail.includes(domain)) return 'important';
             }
-
             return 'inbox';
         }
 
@@ -446,20 +418,17 @@
             
             document.getElementById('header-title').innerText = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
             
-            // Clean Spam button visibility
             const cleanSpamBtn = document.getElementById('btn-clean-spam');
             if (currentTab === 'spam') cleanSpamBtn.classList.replace('hidden', 'flex');
             else cleanSpamBtn.classList.replace('flex', 'hidden');
 
-            // Filter emails by tab
             let displayEmails = allEmails.filter(e => e.category === currentTab);
 
-            // Sort: Marked senders float to top
             displayEmails.sort((a, b) => {
                 const aMarked = markedSenders.includes(a.pureEmail) ? 1 : 0;
                 const bMarked = markedSenders.includes(b.pureEmail) ? 1 : 0;
                 if (aMarked !== bMarked) return bMarked - aMarked;
-                return b.timestamp - a.timestamp; // standard desc sort
+                return b.timestamp - a.timestamp; 
             });
 
             if(displayEmails.length === 0) {
@@ -473,7 +442,6 @@
                 el.className = `glass p-4 rounded-xl relative animate-fade-in ${isMarked ? 'border-l-4 border-l-blue-500' : ''}`;
                 el.style.animationDelay = `${index * 0.05}s`;
                 
-                // Truncate subject and preview
                 const shortSubject = email.subject.length > 40 ? email.subject.substring(0, 40) + '...' : email.subject;
                 const shortPreview = email.body.substring(0, 60).replace(/\s+/g, ' ') + '...';
 
@@ -492,16 +460,14 @@
                     </button>
                 `;
 
-                // Long Press Logic
                 el.addEventListener('touchstart', (e) => handleTouchStart(e, email.messageId), {passive: true});
                 el.addEventListener('touchend', handleTouchEnd);
                 el.addEventListener('mousedown', (e) => handleTouchStart(e, email.messageId));
                 el.addEventListener('mouseup', handleTouchEnd);
                 el.addEventListener('mouseleave', handleTouchEnd);
 
-                // View Short Button Logic
                 el.querySelector('.btn-view-short').addEventListener('click', (e) => {
-                    e.stopPropagation(); // prevent long press interference
+                    e.stopPropagation(); 
                     openSummaryModal(email);
                 });
 
@@ -516,7 +482,6 @@
                 if(!tab) return;
                 currentTab = tab;
                 
-                // Update Nav UI
                 document.querySelectorAll('.nav-btn').forEach(b => {
                     b.classList.remove('text-blue-400');
                     b.classList.add('text-gray-400');
@@ -528,7 +493,6 @@
             });
         });
 
-        // Clean Spam
         document.getElementById('btn-clean-spam').addEventListener('click', async () => {
             if(!confirm("Delete all spam emails?")) return;
             const spamEmails = allEmails.filter(e => e.category === 'spam');
@@ -549,8 +513,8 @@
             longPressTimer = setTimeout(() => {
                 selectedEmailId = msgId;
                 openActionModal();
-                if(window.navigator.vibrate) window.navigator.vibrate(50); // Haptic feedback
-            }, 600); // 600ms long press
+                if(window.navigator.vibrate) window.navigator.vibrate(50); 
+            }, 600); 
         }
 
         function handleTouchEnd() {
@@ -595,7 +559,7 @@
                     }
                 }
                 else if (action === 'category') {
-                    alert("Category creation logic goes here!"); // Placeholder for category modal
+                    alert("Category creation logic goes here!"); 
                 }
 
                 closeActionModal();
@@ -616,17 +580,14 @@
                 contentBox.classList.remove('translate-y-full');
             }, 10);
 
-            // Check Cache
             const sumRef = doc(db, "users", currentUser.email, "summaries", email.messageId);
             const sumSnap = await getDoc(sumRef);
             let summaryText = "";
 
-            if (sumSnap.exists() && (Date.now() - sumSnap.data().timestamp < 30 * 60 * 1000)) { // 30 mins cache
+            if (sumSnap.exists() && (Date.now() - sumSnap.data().timestamp < 30 * 60 * 1000)) { 
                 summaryText = sumSnap.data().text;
             } else {
-                // Fetch from Gemini
                 summaryText = await fetchGeminiSummary(email.body);
-                // Save to Cache
                 await setDoc(sumRef, { text: summaryText, timestamp: Date.now() });
             }
 
@@ -655,7 +616,7 @@
         function typeText(element, text) {
             element.innerHTML = '';
             let i = 0;
-            const speed = 15; // ms
+            const speed = 15; 
             function typeWriter() {
                 if (i < text.length) {
                     element.innerHTML += text.charAt(i);
@@ -691,21 +652,19 @@
             }
         }
 
-        // ================= FIREBASE CLOUD MESSAGING =================
+        // ================= FIREBASE CLOUD MESSAGING & NOTIFICATIONS =================
         async function requestPushNotifications() {
+            if (!("Notification" in window)) return;
             if (!messaging) return;
             try {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
-                    // Requires VAPID key in production + firebase-messaging-sw.js
                     const registration = await navigator.serviceWorker.getRegistration();
-
                     const currentToken = await getToken(messaging, {
                         vapidKey: "BFGYgFbYA2DadTAKEhwNZCznOBMSONLpSNij1A6P0YgCSXulLKnjKYq1Zz04cOsreJw3l6_E_BsfUAtDPbstNHA",
                         serviceWorkerRegistration: registration
                     });
                     
-                    // Save token to firestore for backend messaging
                     onMessage(messaging, (payload) => {
                         triggerLocalNotification(payload.notification.title, payload.notification.body);
                     });
@@ -713,24 +672,40 @@
             } catch(e) { console.log("FCM Setup failed (normal if missing sw.js)", e); }
         }
 
-        function triggerLocalNotification(title, body) {
-            if (Notification.permission === 'granted') {
-                new Notification(title, { body: body, icon: "https://www.svgrepo.com/show/475656/google-color.svg" });
+        // FIXED: Local Notification function for Mobile & Desktop compatibility
+        async function triggerLocalNotification(title, body) {
+            try {
+                if (!("Notification" in window)) return;
+                
+                if (Notification.permission === 'granted') {
+                    // Try to use Service Worker (Required for Mobile Chrome)
+                    if ('serviceWorker' in navigator) {
+                        const registration = await navigator.serviceWorker.ready;
+                        if (registration && registration.showNotification) {
+                            await registration.showNotification(title, { 
+                                body: body, 
+                                icon: "https://www.svgrepo.com/show/475656/google-color.svg" 
+                            });
+                            return; // Success on mobile
+                        }
+                    }
+                    // Fallback for Desktop
+                    new Notification(title, { body: body, icon: "https://www.svgrepo.com/show/475656/google-color.svg" });
+                }
+            } catch (error) {
+                console.warn("Notification failed quietly:", error);
             }
         }
         
-        // REGISTER SERVICE WORKER (VERY IMPORTANT)
+        // REGISTER SERVICE WORKER
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
                 try {
                     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
                     console.log('✅ Service Worker Registered:', registration);
-
-                    // Attach SW to messaging (FIX)
                     if (messaging) {
                         messaging.useServiceWorker(registration);
                     }
-
                 } catch (err) {
                     console.error('❌ Service Worker Error:', err);
                 }
