@@ -216,28 +216,33 @@
             if (response && response.access_token) {
                 accessToken = response.access_token;
                 
-                // Fetch User Profile
-                const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: { Authorization: `Bearer ${accessToken}` }
-                });
-                const profile = await profileRes.json();
-                
-                currentUser = {
-                    name: profile.name,
-                    email: profile.email,
-                    picture: profile.picture
-                };
+                try {
+                    // Fetch User Profile
+                    const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                        headers: { Authorization: `Bearer ${accessToken}` }
+                    });
+                    const profile = await profileRes.json();
+                    
+                    currentUser = {
+                        name: profile.name,
+                        email: profile.email,
+                        picture: profile.picture
+                    };
 
-                document.getElementById('user-email-display').innerText = currentUser.email;
-                
-                // Switch UI
-                document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
-                setTimeout(() => {
-                    document.getElementById('login-screen').classList.add('hidden');
-                    document.getElementById('app-screen').classList.remove('hidden');
-                    document.getElementById('app-screen').classList.add('flex');
-                    initApp();
-                }, 500);
+                    document.getElementById('user-email-display').innerText = currentUser.email;
+                    
+                    // Switch UI
+                    document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
+                    setTimeout(() => {
+                        document.getElementById('login-screen').classList.add('hidden');
+                        document.getElementById('app-screen').classList.remove('hidden');
+                        document.getElementById('app-screen').classList.add('flex');
+                        initApp();
+                    }, 500);
+                } catch(e) {
+                    console.error("Profile Fetch Error:", e);
+                    alert("Failed to fetch user profile. Please try logging in again.");
+                }
             }
         }
 
@@ -245,7 +250,7 @@
         async function initApp() {
             await loadUserSettings();
             requestPushNotifications();
-            loadEmailsFromFirestore(); // Load cached quickly
+            await loadEmailsFromFirestore(); // Load cached quickly
             syncGmail(); // Fetch new
         }
 
@@ -271,7 +276,10 @@
         document.getElementById('btn-sync').addEventListener('click', syncGmail);
 
         async function syncGmail() {
-            if(!accessToken) return;
+            if(!accessToken) {
+                alert("Please login first! Ensure you checked the Gmail permission box during login.");
+                return;
+            }
             showSync(true);
 
             try {
@@ -281,7 +289,15 @@
                 });
                 const listData = await listRes.json();
                 
-                if (!listData.messages) { showSync(false); return; }
+                if (!listRes.ok) {
+                    throw new Error(listData.error?.message || "Google API Error. Ensure you ticked the Gmail permission checkbox during login.");
+                }
+                
+                if (!listData.messages || listData.messages.length === 0) { 
+                    console.log("No emails found.");
+                    showSync(false); 
+                    return; 
+                }
 
                 for (let msg of listData.messages) {
                     // Check if already in Firestore
@@ -295,6 +311,11 @@
                         });
                         const detailData = await detailRes.json();
                         
+                        if (!detailRes.ok) {
+                            console.warn("Failed to fetch details for msg:", msg.id);
+                            continue;
+                        }
+
                         const parsedEmail = parseGmailMessage(detailData);
                         
                         // Categorize Email via Smart Filters
@@ -312,8 +333,8 @@
                 
                 await loadEmailsFromFirestore();
             } catch(e) {
-                console.error("Sync error:", e);
-                alert("Error syncing emails. Check console and Client ID.");
+                console.error("Sync error details:", e);
+                alert("Sync Error: " + e.message); // This will show the EXACT reason now
             }
             
             showSync(false);
@@ -321,29 +342,48 @@
 
         // ================= PARSING & FILTERING =================
         function parseGmailMessage(message) {
-            const headers = message.payload.headers;
             let subject = "(No Subject)";
             let sender = "(Unknown Sender)";
-            let dateStr = "";
+            let dateStr = new Date().toISOString();
 
-            headers.forEach(h => {
-                if (h.name.toLowerCase() === 'subject') subject = h.value;
-                if (h.name.toLowerCase() === 'from') sender = h.value;
-                if (h.name.toLowerCase() === 'date') dateStr = h.value;
-            });
-
-            // Extract Body (Base64 Decode)
-            let body = "";
-            if (message.payload.parts) {
-                const part = message.payload.parts.find(p => p.mimeType === 'text/plain');
-                if (part && part.body.data) body = decodeBase64(part.body.data);
-            } else if (message.payload.body && message.payload.body.data) {
-                body = decodeBase64(message.payload.body.data);
+            if (message.payload && message.payload.headers) {
+                message.payload.headers.forEach(h => {
+                    if (h.name.toLowerCase() === 'subject') subject = h.value;
+                    if (h.name.toLowerCase() === 'from') sender = h.value;
+                    if (h.name.toLowerCase() === 'date') dateStr = h.value;
+                });
             }
 
-            // Extract pure email address from sender "Name <email@domain.com>"
-            const emailMatch = sender.match(/<([^>]+)>/);
-            const pureEmail = emailMatch ? emailMatch[1].toLowerCase() : sender.toLowerCase();
+            // Extract Body (Base64 Decode)
+            let body = "No text content available.";
+            if (message.payload) {
+                if (message.payload.parts) {
+                    // Find text/plain part directly
+                    let part = message.payload.parts.find(p => p.mimeType === 'text/plain');
+                    
+                    // Sometimes parts are nested deeper inside multipart/alternative
+                    if(!part && message.payload.parts[0]?.parts) {
+                        part = message.payload.parts[0].parts.find(p => p.mimeType === 'text/plain');
+                    }
+                    
+                    if (part && part.body && part.body.data) {
+                        body = decodeBase64(part.body.data);
+                    }
+                } else if (message.payload.body && message.payload.body.data) {
+                    body = decodeBase64(message.payload.body.data);
+                }
+            }
+
+            // Extract pure email safely
+            let pureEmail = sender.toLowerCase();
+            try {
+                const emailMatch = sender.match(/<([^>]+)>/);
+                if (emailMatch && emailMatch[1]) {
+                    pureEmail = emailMatch[1].toLowerCase();
+                }
+            } catch(err) {
+                console.warn("Could not parse sender email", err);
+            }
 
             return {
                 messageId: message.id,
@@ -351,7 +391,7 @@
                 pureEmail: pureEmail,
                 subject: subject,
                 body: body.substring(0, 2000), // truncate for DB limits
-                timestamp: new Date(dateStr).getTime(),
+                timestamp: new Date(dateStr).getTime() || Date.now(),
                 category: 'inbox' // default
             };
         }
@@ -381,18 +421,23 @@
 
         // ================= FIRESTORE LOAD & RENDER =================
         async function loadEmailsFromFirestore() {
-            const q = query(
-                collection(db, "users", currentUser.email, "emails"),
-                orderBy("timestamp", "desc")
-            );
-            const querySnapshot = await getDocs(q);
-            
-            allEmails = [];
-            querySnapshot.forEach((doc) => {
-                allEmails.push(doc.data());
-            });
+            try {
+                const q = query(
+                    collection(db, "users", currentUser.email, "emails"),
+                    orderBy("timestamp", "desc")
+                );
+                const querySnapshot = await getDocs(q);
+                
+                allEmails = [];
+                querySnapshot.forEach((doc) => {
+                    allEmails.push(doc.data());
+                });
 
-            renderUI();
+                renderUI();
+            } catch (e) {
+                console.error("Firestore Load Error:", e);
+                alert("Database Error: Make sure your Firebase Rules allow Read/Write access.");
+            }
         }
 
         function renderUI() {
@@ -653,12 +698,13 @@
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
                     // Requires VAPID key in production + firebase-messaging-sw.js
-                     const registration = await navigator.serviceWorker.getRegistration();
+                    const registration = await navigator.serviceWorker.getRegistration();
 
-const currentToken = await getToken(messaging, {
-    vapidKey: "BFGYgFbYA2DadTAKEhwNZCznOBMSONLpSNij1A6P0YgCSXulLKnjKYq1Zz04cOsreJw3l6_E_BsfUAtDPbstNHA",
-    serviceWorkerRegistration: registration
-});
+                    const currentToken = await getToken(messaging, {
+                        vapidKey: "BFGYgFbYA2DadTAKEhwNZCznOBMSONLpSNij1A6P0YgCSXulLKnjKYq1Zz04cOsreJw3l6_E_BsfUAtDPbstNHA",
+                        serviceWorkerRegistration: registration
+                    });
+                    
                     // Save token to firestore for backend messaging
                     onMessage(messaging, (payload) => {
                         triggerLocalNotification(payload.notification.title, payload.notification.body);
@@ -672,24 +718,24 @@ const currentToken = await getToken(messaging, {
                 new Notification(title, { body: body, icon: "https://www.svgrepo.com/show/475656/google-color.svg" });
             }
         }
-// REGISTER SERVICE WORKER (VERY IMPORTANT)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
-        try {
-            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-            console.log('✅ Service Worker Registered:', registration);
+        
+        // REGISTER SERVICE WORKER (VERY IMPORTANT)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                    console.log('✅ Service Worker Registered:', registration);
 
-            // Attach SW to messaging (FIX)
-            if (messaging) {
-                messaging.useServiceWorker(registration);
-            }
+                    // Attach SW to messaging (FIX)
+                    if (messaging) {
+                        messaging.useServiceWorker(registration);
+                    }
 
-        } catch (err) {
-            console.error('❌ Service Worker Error:', err);
+                } catch (err) {
+                    console.error('❌ Service Worker Error:', err);
+                }
+            });
         }
-    });
-}
-
     </script>
 </body>
 </html>
