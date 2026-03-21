@@ -37,7 +37,10 @@
 
         /* Animations */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.4s ease forwards; }
+        .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+
+        @keyframes pageTransition { 0% { opacity: 0; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
+        .page-transition { animation: pageTransition 0.3s ease-in-out forwards; }
 
         @keyframes blink { 50% { opacity: 0; } }
         .cursor-blink { animation: blink 1s infinite; }
@@ -90,25 +93,25 @@
             </div>
 
             <!-- Email List Content -->
-            <main id="email-list" class="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-24">
+            <main id="email-list" class="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-24 page-transition">
                 <!-- Emails injected here via JS -->
             </main>
 
             <!-- Bottom Navigation -->
-            <nav class="absolute bottom-0 w-full glass pb-safe pt-3 px-6 flex justify-between items-center z-20 rounded-t-2xl">
-                <button class="nav-btn active flex flex-col items-center text-blue-400 gap-1 pb-2" data-tab="inbox">
+            <nav class="absolute bottom-0 left-0 w-full glass pb-safe pt-3 px-4 flex justify-around items-center z-40 rounded-t-2xl">
+                <button class="nav-btn active flex flex-col items-center text-blue-400 gap-1 pb-2 w-16" data-tab="inbox">
                     <i class="fa-solid fa-inbox text-xl"></i>
                     <span class="text-[10px] font-medium">Inbox</span>
                 </button>
-                <button class="nav-btn flex flex-col items-center text-gray-400 gap-1 pb-2" data-tab="important">
+                <button class="nav-btn flex flex-col items-center text-gray-400 gap-1 pb-2 w-16" data-tab="important">
                     <i class="fa-solid fa-star text-xl"></i>
                     <span class="text-[10px] font-medium">Important</span>
                 </button>
-                <button class="nav-btn flex flex-col items-center text-gray-400 gap-1 pb-2" data-tab="spam">
+                <button class="nav-btn flex flex-col items-center text-gray-400 gap-1 pb-2 w-16" data-tab="spam">
                     <i class="fa-solid fa-shield-virus text-xl"></i>
-                    <span class="text-[10px] font-medium">Spam</span>
+                    <span class="text-[10px] font-medium">Fraud</span>
                 </button>
-                <button id="btn-clean-spam" class="hidden flex flex-col items-center text-red-400 gap-1 pb-2">
+                <button id="btn-clean-spam" class="hidden flex flex-col items-center text-red-400 gap-1 pb-2 w-16">
                     <i class="fa-solid fa-broom text-xl"></i>
                     <span class="text-[10px] font-medium">Clean</span>
                 </button>
@@ -119,12 +122,12 @@
         
         <!-- AI Summary Modal -->
         <div id="summary-modal" class="hidden absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center">
-            <div class="glass w-full h-[60%] rounded-t-3xl p-6 flex flex-col transform translate-y-full transition-transform duration-300" id="summary-content-box">
-                <div class="flex justify-between items-center mb-4">
+            <div class="glass w-full h-[65%] rounded-t-3xl p-6 flex flex-col transform translate-y-full transition-transform duration-300" id="summary-content-box">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-600 pb-3">
                     <h3 class="text-xl font-bold flex items-center gap-2 text-blue-400">
-                        <i class="fa-solid fa-sparkles"></i> AI Summary
+                        <i class="fa-solid fa-sparkles"></i> AI Summary <span class="text-[10px] bg-blue-600/30 text-blue-300 px-2 py-0.5 rounded-full">Gemini 2.5</span>
                     </h3>
-                    <button id="btn-close-summary" class="text-gray-400 text-2xl p-2">&times;</button>
+                    <button id="btn-close-summary" class="text-gray-400 hover:text-white text-2xl p-2">&times;</button>
                 </div>
                 <div id="ai-typing-area" class="text-gray-200 leading-relaxed overflow-y-auto flex-1 text-sm md:text-base pr-2">
                     <!-- Typing effect output -->
@@ -137,15 +140,15 @@
             <div class="glass w-full rounded-2xl p-4 flex flex-col gap-2 scale-90 opacity-0 transition-all duration-300" id="action-box">
                 <h4 class="text-center text-gray-400 text-xs uppercase tracking-wider mb-2">Actions</h4>
                 <button class="action-btn bg-white/10 p-3 rounded-lg text-left text-white flex items-center gap-3 active:bg-white/20" data-action="mark">
-                    <i class="fa-solid fa-thumbtack text-blue-400 w-5"></i> Mark Sender
+                    <i class="fa-solid fa-thumbtack text-blue-400 w-5"></i> Pin Sender
                 </button>
-                <button class="action-btn bg-white/10 p-3 rounded-lg text-left text-white flex items-center gap-3 active:bg-white/20" data-action="category">
-                    <i class="fa-solid fa-tags text-green-400 w-5"></i> Add to Category
+                <button class="action-btn bg-white/10 p-3 rounded-lg text-left text-orange-400 flex items-center gap-3 active:bg-white/20" data-action="fraud">
+                    <i class="fa-solid fa-triangle-exclamation w-5"></i> Move to Fraud
                 </button>
                 <button class="action-btn bg-white/10 p-3 rounded-lg text-left text-red-400 flex items-center gap-3 active:bg-white/20" data-action="delete">
                     <i class="fa-solid fa-trash w-5"></i> Delete Email
                 </button>
-                <button id="btn-close-actions" class="mt-2 p-3 text-center text-gray-400 font-medium active:text-white">Cancel</button>
+                <button id="btn-close-actions" class="mt-2 p-3 text-center text-gray-400 font-medium active:text-white border-t border-gray-600">Cancel</button>
             </div>
         </div>
 
@@ -154,8 +157,7 @@
     <!-- Firebase SDKs (Modular V9) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         // ================= CONFIGURATION =================
         const GOOGLE_CLIENT_ID = "30172584711-9l229pscpqpf478qvtp2ronplmbrtha0.apps.googleusercontent.com"; 
@@ -172,20 +174,20 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
-        let messaging;
-        try {
-            messaging = getMessaging(app);
-        } catch(e) {
-            console.warn("FCM messaging not supported or service worker missing.", e);
-        }
 
         // ================= STATE =================
         let accessToken = null;
         let currentUser = null;
         let currentTab = 'inbox'; 
         let allEmails = [];
-        let spamKeywords = ['winner', 'lottery', 'viagra', 'earn money fast', 'prince', 'crypto', 'giveaway'];
+        
+        // ADDED NEW FRAUD WORDS HERE
+        let spamKeywords = [
+            'free offer', 'free gift', 'prize', 'urgent', 'winner', 'lottery', 
+            'viagra', 'earn money fast', 'crypto', 'giveaway', 'claim now', 
+            'cash prize', 'jackpot', 'bank alert', 'account suspended'
+        ];
+        
         let markedSenders = [];
         let companyDomains = ['amazon', 'paypal', 'netflix', 'bank', 'apple', 'google', 'microsoft'];
         
@@ -244,19 +246,12 @@
         // ================= APP INITIALIZATION =================
         async function initApp() {
             await loadUserSettings();
-            requestPushNotifications();
             await loadEmailsFromFirestore();
             syncGmail(); 
         }
 
         async function loadUserSettings() {
             try {
-                const spamRef = doc(db, "users", currentUser.email, "settings", "spam_keywords");
-                const spamSnap = await getDoc(spamRef);
-                if (spamSnap.exists() && spamSnap.data().keywords) {
-                    spamKeywords = spamSnap.data().keywords;
-                }
-
                 const markRef = doc(db, "users", currentUser.email, "settings", "marked_senders");
                 const markSnap = await getDoc(markRef);
                 if (markSnap.exists() && markSnap.data().senders) {
@@ -269,26 +264,19 @@
         document.getElementById('btn-sync').addEventListener('click', syncGmail);
 
         async function syncGmail() {
-            if(!accessToken) {
-                alert("Please login first! Ensure you checked the Gmail permission box during login.");
-                return;
-            }
+            if(!accessToken) return;
             showSync(true);
 
             try {
-                const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=15', {
+                // CHANGED: maxResults=50 to fetch more emails!
+                const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50', {
                     headers: { Authorization: `Bearer ${accessToken}` }
                 });
                 const listData = await listRes.json();
                 
-                if (!listRes.ok) {
-                    throw new Error(listData.error?.message || "Google API Error. Ensure you ticked the Gmail permission checkbox during login.");
-                }
-                
+                if (!listRes.ok) throw new Error(listData.error?.message || "Google API Error.");
                 if (!listData.messages || listData.messages.length === 0) { 
-                    console.log("No emails found.");
-                    showSync(false); 
-                    return; 
+                    showSync(false); return; 
                 }
 
                 for (let msg of listData.messages) {
@@ -307,17 +295,13 @@
                         parsedEmail.category = categorizeEmail(parsedEmail);
 
                         await setDoc(docRef, parsedEmail);
-
-                        if (parsedEmail.category === 'important') {
-                            triggerLocalNotification("Important Email", parsedEmail.subject);
-                        }
                     }
                 }
                 
                 await loadEmailsFromFirestore();
             } catch(e) {
-                console.error("Sync error details:", e);
-                alert("Sync Error: " + e.message); 
+                console.error("Sync error:", e);
+                // alert("Sync Error: " + e.message); 
             }
             
             showSync(false);
@@ -358,9 +342,7 @@
                 if (emailMatch && emailMatch[1]) {
                     pureEmail = emailMatch[1].toLowerCase();
                 }
-            } catch(err) {
-                console.warn("Could not parse sender email", err);
-            }
+            } catch(err) {}
 
             return {
                 messageId: message.id,
@@ -408,15 +390,22 @@
                 renderUI();
             } catch (e) {
                 console.error("Firestore Load Error:", e);
-                alert("Database Error: Make sure your Firebase Rules allow Read/Write access.");
+                // alert("Database Error. Please check Firebase Rules.");
             }
         }
 
         function renderUI() {
             const container = document.getElementById('email-list');
+            
+            // Re-trigger animation to feel like a page change
+            container.classList.remove('page-transition');
+            void container.offsetWidth; // trigger reflow
+            container.classList.add('page-transition');
+            
             container.innerHTML = '';
             
-            document.getElementById('header-title').innerText = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
+            // Set Header Title (Spam -> Fraud)
+            document.getElementById('header-title').innerText = currentTab === 'spam' ? 'Fraud' : currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
             
             const cleanSpamBtn = document.getElementById('btn-clean-spam');
             if (currentTab === 'spam') cleanSpamBtn.classList.replace('hidden', 'flex');
@@ -432,7 +421,10 @@
             });
 
             if(displayEmails.length === 0) {
-                container.innerHTML = `<div class="text-center text-gray-500 mt-10 text-sm">No emails in ${currentTab}.</div>`;
+                container.innerHTML = `<div class="text-center text-gray-500 mt-20 flex flex-col items-center gap-3">
+                    <i class="fa-solid fa-box-open text-4xl opacity-50"></i>
+                    <p class="text-sm">No emails in ${currentTab === 'spam' ? 'Fraud' : currentTab}.</p>
+                </div>`;
                 return;
             }
 
@@ -440,7 +432,7 @@
                 const isMarked = markedSenders.includes(email.pureEmail);
                 const el = document.createElement('div');
                 el.className = `glass p-4 rounded-xl relative animate-fade-in ${isMarked ? 'border-l-4 border-l-blue-500' : ''}`;
-                el.style.animationDelay = `${index * 0.05}s`;
+                el.style.animationDelay = `${index * 0.03}s`; // Faster cascade
                 
                 const shortSubject = email.subject.length > 40 ? email.subject.substring(0, 40) + '...' : email.subject;
                 const shortPreview = email.body.substring(0, 60).replace(/\s+/g, ' ') + '...';
@@ -456,7 +448,7 @@
                     <div class="text-xs font-semibold text-gray-300 mb-1">${shortSubject}</div>
                     <div class="text-xs text-gray-500 mb-3">${shortPreview}</div>
                     <button class="bg-blue-600/20 text-blue-400 text-xs py-1.5 px-3 rounded-lg font-medium active:scale-95 transition-transform btn-view-short" data-id="${email.messageId}">
-                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> View Short
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> AI Summary
                     </button>
                 `;
 
@@ -494,7 +486,7 @@
         });
 
         document.getElementById('btn-clean-spam').addEventListener('click', async () => {
-            if(!confirm("Delete all spam emails?")) return;
+            if(!confirm("Delete all Fraud emails permanently?")) return;
             const spamEmails = allEmails.filter(e => e.category === 'spam');
             const batch = writeBatch(db);
             
@@ -514,7 +506,7 @@
                 selectedEmailId = msgId;
                 openActionModal();
                 if(window.navigator.vibrate) window.navigator.vibrate(50); 
-            }, 600); 
+            }, 500); // reduced to 500ms for better UX
         }
 
         function handleTouchEnd() {
@@ -537,7 +529,7 @@
             setTimeout(() => {
                 modal.classList.add('hidden');
                 selectedEmailId = null;
-            }, 300);
+            }, 200);
         }
 
         document.getElementById('btn-close-actions').addEventListener('click', closeActionModal);
@@ -546,10 +538,12 @@
             btn.addEventListener('click', async (e) => {
                 const action = e.currentTarget.getAttribute('data-action');
                 if(!selectedEmailId) return;
-                const emailObj = allEmails.find(e => e.messageId === selectedEmailId);
                 
+                const emailObj = allEmails.find(e => e.messageId === selectedEmailId);
+                const emailRef = doc(db, "users", currentUser.email, "emails", selectedEmailId);
+
                 if (action === 'delete') {
-                    await deleteDoc(doc(db, "users", currentUser.email, "emails", selectedEmailId));
+                    await deleteDoc(emailRef);
                     allEmails = allEmails.filter(e => e.messageId !== selectedEmailId);
                 } 
                 else if (action === 'mark') {
@@ -558,8 +552,9 @@
                         await setDoc(doc(db, "users", currentUser.email, "settings", "marked_senders"), { senders: markedSenders });
                     }
                 }
-                else if (action === 'category') {
-                    alert("Category creation logic goes here!"); 
+                else if (action === 'fraud') { // Move to fraud functionality added
+                    emailObj.category = 'spam';
+                    await setDoc(emailRef, emailObj); // update in DB
                 }
 
                 closeActionModal();
@@ -567,13 +562,13 @@
             });
         });
 
-        // ================= AI SUMMARY (GEMINI) =================
+        // ================= AI SUMMARY (GEMINI 2.5) =================
         async function openSummaryModal(email) {
             const modal = document.getElementById('summary-modal');
             const contentBox = document.getElementById('summary-content-box');
             const textArea = document.getElementById('ai-typing-area');
             
-            textArea.innerHTML = `<div class="flex items-center gap-2 text-blue-400"><div class="loader !w-4 !h-4"></div> AI is analyzing...</div>`;
+            textArea.innerHTML = `<div class="flex items-center gap-2 text-blue-400 h-full justify-center"><div class="loader !w-5 !h-5 border-2"></div> AI is analyzing with Gemini 2.5...</div>`;
             
             modal.classList.remove('hidden');
             setTimeout(() => {
@@ -588,42 +583,65 @@
                 summaryText = sumSnap.data().text;
             } else {
                 summaryText = await fetchGeminiSummary(email.body);
-                await setDoc(sumRef, { text: summaryText, timestamp: Date.now() });
+                // Only save if it wasn't an error
+                if(!summaryText.includes("Failed to generate")) {
+                    await setDoc(sumRef, { text: summaryText, timestamp: Date.now() });
+                }
             }
 
             typeText(textArea, summaryText);
         }
 
         async function fetchGeminiSummary(emailBody) {
-            if(GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") return "Please configure GEMINI_API_KEY in the code to enable AI Summaries.";
-
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                // UPDATED ENDPOINT TO GEMINI 2.5 FLASH AS REQUESTED
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Summarize this email in under 60 words: ${emailBody}` }] }]
+                        contents: [{ parts: [{ text: `Summarize this email clearly in exactly 3 bullet points, keep it short: ${emailBody}` }] }]
                     })
                 });
+                
                 const data = await res.json();
+                
+                if(data.error) {
+                    throw new Error(data.error.message);
+                }
+                
                 return data.candidates[0].content.parts[0].text;
             } catch(e) {
                 console.error("Gemini Error:", e);
-                return "Failed to generate summary. AI service might be unavailable.";
+                return "Failed to generate summary. The API key might be restricted or the service is temporarily unavailable.";
             }
         }
 
         function typeText(element, text) {
             element.innerHTML = '';
             let i = 0;
-            const speed = 15; 
+            const speed = 10; // faster typing
+            
+            // Format bullet points properly with HTML
+            const formattedText = text.replace(/\*/g, '<br>•').replace(/<br><br>/g, '<br>');
+
             function typeWriter() {
-                if (i < text.length) {
-                    element.innerHTML += text.charAt(i);
-                    i++;
+                if (i < formattedText.length) {
+                    if(formattedText.charAt(i) === '<') {
+                        let tag = "";
+                        while(formattedText.charAt(i) !== '>' && i < formattedText.length){
+                            tag += formattedText.charAt(i);
+                            i++;
+                        }
+                        tag += '>';
+                        element.innerHTML += tag;
+                        i++;
+                    } else {
+                        element.innerHTML += formattedText.charAt(i);
+                        i++;
+                    }
                     setTimeout(typeWriter, speed);
                 } else {
-                    element.innerHTML += '<span class="cursor-blink">|</span>';
+                    element.innerHTML += '<span class="cursor-blink font-bold text-blue-500 ml-1">|</span>';
                 }
             }
             typeWriter();
@@ -652,65 +670,6 @@
             }
         }
 
-        // ================= FIREBASE CLOUD MESSAGING & NOTIFICATIONS =================
-        async function requestPushNotifications() {
-            if (!("Notification" in window)) return;
-            if (!messaging) return;
-            try {
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted') {
-                    const registration = await navigator.serviceWorker.getRegistration();
-                    const currentToken = await getToken(messaging, {
-                        vapidKey: "BFGYgFbYA2DadTAKEhwNZCznOBMSONLpSNij1A6P0YgCSXulLKnjKYq1Zz04cOsreJw3l6_E_BsfUAtDPbstNHA",
-                        serviceWorkerRegistration: registration
-                    });
-                    
-                    onMessage(messaging, (payload) => {
-                        triggerLocalNotification(payload.notification.title, payload.notification.body);
-                    });
-                }
-            } catch(e) { console.log("FCM Setup failed (normal if missing sw.js)", e); }
-        }
-
-        // FIXED: Local Notification function for Mobile & Desktop compatibility
-        async function triggerLocalNotification(title, body) {
-            try {
-                if (!("Notification" in window)) return;
-                
-                if (Notification.permission === 'granted') {
-                    // Try to use Service Worker (Required for Mobile Chrome)
-                    if ('serviceWorker' in navigator) {
-                        const registration = await navigator.serviceWorker.ready;
-                        if (registration && registration.showNotification) {
-                            await registration.showNotification(title, { 
-                                body: body, 
-                                icon: "https://www.svgrepo.com/show/475656/google-color.svg" 
-                            });
-                            return; // Success on mobile
-                        }
-                    }
-                    // Fallback for Desktop
-                    new Notification(title, { body: body, icon: "https://www.svgrepo.com/show/475656/google-color.svg" });
-                }
-            } catch (error) {
-                console.warn("Notification failed quietly:", error);
-            }
-        }
-        
-        // REGISTER SERVICE WORKER
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', async () => {
-                try {
-                    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-                    console.log('✅ Service Worker Registered:', registration);
-                    if (messaging) {
-                        messaging.useServiceWorker(registration);
-                    }
-                } catch (err) {
-                    console.error('❌ Service Worker Error:', err);
-                }
-            });
-        }
     </script>
 </body>
 </html>
