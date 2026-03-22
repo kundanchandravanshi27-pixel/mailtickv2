@@ -107,23 +107,26 @@
             </nav>
         </div>
 
-        <!-- ================= FULL EMAIL VIEW ================= -->
+        <!-- ================= FULL EMAIL VIEW (UPDATED FOR HTML EXACT LOOK) ================= -->
         <div id="full-email-view" class="hidden absolute inset-0 z-40 bg-[#0f172a] flex-col slide-in-right">
-            <header class="pt-10 pb-4 px-4 glass flex items-center gap-4 sticky top-0 border-b border-gray-800 z-10">
+            <header class="pt-10 pb-4 px-4 glass flex items-center gap-4 sticky top-0 border-b border-gray-800 z-10 flex-shrink-0">
                 <button id="btn-close-email" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center text-xl active:scale-90 flex-shrink-0"><i class="fa-solid fa-arrow-left"></i></button>
                 <h2 class="text-xl font-bold truncate flex-1">Email View</h2>
             </header>
-            <div class="flex-1 overflow-y-auto hide-scrollbar p-5 select-text">
+            
+            <div class="p-5 border-b border-gray-800 flex-shrink-0 bg-[#0f172a] select-text">
                 <h1 id="fv-subject" class="text-xl font-bold mb-4 text-white leading-snug break-words">Subject</h1>
-                <div class="flex justify-between items-start mb-6 pb-6 border-b border-gray-800">
+                <div class="flex justify-between items-start">
                     <div class="flex-1 min-w-0 pr-4">
                         <div id="fv-sender-name" class="font-bold text-gray-200 text-base truncate">Sender Name</div>
                         <div id="fv-sender-email" class="text-xs text-blue-400 mt-1 truncate">email</div>
                     </div>
                     <div id="fv-date" class="text-[10px] text-gray-500 text-right mt-1 flex-shrink-0 whitespace-nowrap">Date</div>
                 </div>
-                <div id="fv-body" class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">Body</div>
             </div>
+            
+            <!-- Iframe renders the exact HTML of the email with a white background like Gmail -->
+            <iframe id="fv-iframe" class="flex-1 w-full bg-white border-none pb-[20px]"></iframe>
         </div>
 
         <!-- ================= MODALS ================= -->
@@ -156,14 +159,11 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        // PUSH NOTIFICATION SDK ADDED
-        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, deleteDoc, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const GOOGLE_CLIENT_ID = "30172584711-9l229pscpqpf478qvtp2ronplmbrtha0.apps.googleusercontent.com"; 
         
-        // ✨ MAGIC TRICK: Hiding API Keys using Base64 so Google bots don't scan them as leaked.
-        // Ye purani keys hain, par encoded format mein hain. System unhe automatically decode kar lega.
+        // Base64 Encoded API Keys to hide from bots
         const PRIMARY_GEMINI_API_KEY = atob("QUl6YVN5QlhNbV82Q1lHWlBmMWd6ek9OS3gwbmlJU3lNMHl3ek1V"); 
         const FALLBACK_GEMINI_API_KEY = atob("QUl6YVN5Q0tnbWFpMk5YR01lUWpGMF8weG1SVWN4c2FUcEdkVFY0"); 
 
@@ -171,14 +171,11 @@
             apiKey: "AIzaSyDPVa0eYZpxYh6Q5vyhSf0IogTkedc72tE",
             authDomain: "mailtick-35818.firebaseapp.com",
             projectId: "mailtick-35818",
-            storageBucket: "mailtick-35818.firebasestorage.app",
-            messagingSenderId: "727149843542",
-            appId: "1:727149843542:web:42037d523dea9c7f0797f7"
+            storageBucket: "mailtick-35818.firebasestorage.app"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const messaging = getMessaging(app); // Notification messaging init
 
         let accessToken = null;
         let currentUser = null;
@@ -202,7 +199,7 @@
                 document.getElementById('app-screen').classList.remove('hidden');
                 document.getElementById('app-screen').classList.add('flex');
                 initApp(false); 
-                requestNotificationPermission(); // Ask for push notifications
+                requestNotificationPermission(); 
             }
 
             google.accounts.oauth2.initTokenClient({
@@ -244,6 +241,9 @@
             await loadUserSettings();
             await loadEmailsFromFirestore();
             if(shouldSync) syncGmail(); 
+            
+            // START BACKGROUND POLLING FOR NOTIFICATIONS EVERY 30 SECONDS
+            setInterval(checkNewEmailsBackground, 30000); 
         }
 
         async function loadUserSettings() {
@@ -267,6 +267,44 @@
             }
             syncGmail();
         });
+
+        // ================= NOTIFICATION BACKGROUND POLLER =================
+        async function checkNewEmailsBackground() {
+            if(!accessToken) return;
+            try {
+                const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=3', { headers: { Authorization: `Bearer ${accessToken}` } });
+                const listData = await listRes.json();
+                if (!listData.messages) return;
+
+                let hasNewEmail = false;
+                for (let msg of listData.messages) {
+                    const docRef = doc(db, "users", currentUser.email, "emails", msg.id);
+                    const docSnap = await getDoc(docRef);
+                    
+                    if (!docSnap.exists()) {
+                        hasNewEmail = true;
+                        const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+                        const detailData = await detailRes.json();
+                        
+                        const parsedEmail = parseGmailMessage(detailData);
+                        parsedEmail.category = categorizeEmail(parsedEmail);
+                        await setDoc(docRef, parsedEmail);
+
+                        // FIRE SYSTEM NOTIFICATION HERE
+                        if ("Notification" in window && Notification.permission === "granted") {
+                            const senderName = parsedEmail.sender.split('<')[0].replace(/"/g, '').trim();
+                            new Notification(`New Email: ${senderName}`, {
+                                body: parsedEmail.subject,
+                                icon: "https://www.svgrepo.com/show/475656/google-color.svg"
+                            });
+                        }
+                    }
+                }
+                if(hasNewEmail) {
+                    await loadEmailsFromFirestore();
+                }
+            } catch(e) {}
+        }
 
         async function syncGmail() {
             showSync(true);
@@ -293,25 +331,28 @@
             showSync(false);
         }
 
-        // ✨ FIXED: STRICT HTML CLEANER (Fixes random code showing in emails)
         function cleanStrictHTML(rawText) {
-            if(!rawText) return "No content.";
+            if(!rawText) return "";
             try {
-                // Remove all inline styles, script tags, head tags completely before parsing
                 let cleanString = rawText.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
                                          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
                                          .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
-                
                 let doc = new DOMParser().parseFromString(cleanString, 'text/html');
                 let text = doc.body.textContent || doc.body.innerText || "";
-                
-                // Replace multiple blank lines with max 2 lines, and remove weird spaces
                 return text.replace(/\n\s*\n/g, '\n\n').replace(/[ \t]+/g, ' ').trim();
             } catch(e) {
                 return rawText.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
             }
         }
 
+        function decodeBase64(str) {
+            try { 
+                str = str.replace(/-/g, '+').replace(/_/g, '/');
+                return decodeURIComponent(escape(window.atob(str))); 
+            } catch(e) { return ""; }
+        }
+
+        // ================= UPDATED PARSER (Extracts exact HTML for rich emails) =================
         function parseGmailMessage(message) {
             let subject = "(No Subject)";
             let sender = "(Unknown Sender)";
@@ -325,20 +366,38 @@
                 });
             }
 
-            let body = "";
-            let part = message.payload.parts ? message.payload.parts.find(p => p.mimeType === 'text/plain') : null;
-            if(!part && message.payload.parts) part = message.payload.parts.find(p => p.mimeType === 'text/html');
-            if(!part && message.payload.parts && message.payload.parts[0]?.parts) {
-                part = message.payload.parts[0].parts.find(p => p.mimeType === 'text/plain') || message.payload.parts[0].parts.find(p => p.mimeType === 'text/html');
+            let plainBody = "";
+            let htmlBody = "";
+
+            // Recursive function to deeply search for both plain text and HTML
+            function extractParts(parts) {
+                for(let part of parts) {
+                    if(part.mimeType === 'text/plain' && part.body && part.body.data) {
+                        plainBody = decodeBase64(part.body.data);
+                    } else if(part.mimeType === 'text/html' && part.body && part.body.data) {
+                        htmlBody = decodeBase64(part.body.data);
+                    } else if(part.parts) {
+                        extractParts(part.parts); 
+                    }
+                }
             }
 
-            if (part && part.body && part.body.data) {
-                body = decodeBase64(part.body.data);
+            if (message.payload.parts) {
+                extractParts(message.payload.parts);
             } else if (message.payload.body && message.payload.body.data) {
-                body = decodeBase64(message.payload.body.data);
+                if (message.payload.mimeType === 'text/html') {
+                    htmlBody = decodeBase64(message.payload.body.data);
+                } else {
+                    plainBody = decodeBase64(message.payload.body.data);
+                }
             }
 
-            body = cleanStrictHTML(body);
+            // Fallback logically
+            if(!plainBody && htmlBody) plainBody = cleanStrictHTML(htmlBody);
+            if(!htmlBody && plainBody) htmlBody = `<div style="font-family:sans-serif; padding:15px; color:#111;">${plainBody.replace(/\n/g, '<br>')}</div>`;
+
+            // Make sure all links in the HTML iframe open in a new tab instead of inside the iframe
+            htmlBody = htmlBody.replace(/<a /g, '<a target="_blank" rel="noopener noreferrer" ');
 
             let pureEmail = sender.toLowerCase();
             const emailMatch = sender.match(/<([^>]+)>/);
@@ -346,14 +405,12 @@
 
             return {
                 messageId: message.id, sender: sender, pureEmail: pureEmail,
-                subject: subject, body: body.substring(0, 3000), 
-                timestamp: new Date(dateStr).getTime() || Date.now(), category: 'inbox'
+                subject: subject, 
+                body: plainBody.substring(0, 3000), // AI summary ke liye plain text
+                htmlBody: htmlBody, // UI mein dikhane ke liye real HTML design
+                timestamp: new Date(dateStr).getTime() || Date.now(), 
+                category: 'inbox'
             };
-        }
-
-        function decodeBase64(str) {
-            try { return decodeURIComponent(escape(window.atob(str.replace(/-/g, '+').replace(/_/g, '/')))); } 
-            catch(e) { return ""; }
         }
 
         function categorizeEmail(emailObj) {
@@ -485,12 +542,16 @@
             });
         });
 
+        // ================= OPEN FULL EMAIL (WITH IFRAME FIX) =================
         function openFullEmail(email) {
             document.getElementById('fv-subject').innerText = email.subject;
             document.getElementById('fv-sender-name').innerText = email.sender.split('<')[0].replace(/"/g, '').trim();
             document.getElementById('fv-sender-email').innerText = `<${email.pureEmail}>`;
             document.getElementById('fv-date').innerText = new Date(email.timestamp).toLocaleString();
-            document.getElementById('fv-body').innerText = email.body;
+            
+            // Ab hum direct text nahi dal rahe, hum original HTML webpage Iframe me load kar rahe hain!
+            const iframe = document.getElementById('fv-iframe');
+            iframe.srcdoc = email.htmlBody || email.body;
 
             const view = document.getElementById('full-email-view');
             view.classList.remove('hidden'); view.classList.add('flex');
@@ -499,6 +560,7 @@
         document.getElementById('btn-close-email').addEventListener('click', () => {
             document.getElementById('full-email-view').classList.add('hidden');
             document.getElementById('full-email-view').classList.remove('flex');
+            document.getElementById('fv-iframe').srcdoc = ""; // Clear iframe memory on close
         });
 
         function handleTouchStart(e, msgId) {
@@ -572,6 +634,7 @@
                     const response = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        // Notice here we only send `email.body` (Plain Text) to AI, NOT the heavy HTML layout
                         body: JSON.stringify({ contents: [{ parts: [{ text: `Summarize this email clearly in 3 short bullet points:\n\n${email.body}` }] }] })
                     });
                     const data = await response.json();
@@ -642,31 +705,16 @@
             else { ind.classList.add('hidden'); ind.classList.remove('flex'); btnIcon.classList.remove('fa-spin'); }
         }
 
-        // ✨ FIXED: Push Notifications Initialization Properly Handled
+        // Prompts the browser to allow notifications
         function requestNotificationPermission() {
-            if ('serviceWorker' in navigator && 'Notification' in window) {
-                // Register Service Worker First (Ensure the file name is firebase-messaging-sw.js)
-                navigator.serviceWorker.register('./firebase-messaging-sw.js')
-                .then(function(registration) {
-                    // Ask Permission
-                    Notification.requestPermission().then((permission) => {
-                        if (permission === 'granted') {
-                            console.log('Notification permission granted.');
-                            // Firebase token registration can go here if needed in future
-                        } else {
-                            console.log('Unable to get permission to notify.');
-                        }
-                    });
-                }).catch(function(err) {
-                    console.log('Service Worker registration failed: ', err);
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        console.log("Notification permission granted!");
+                    }
                 });
             }
         }
-
-        // Handle messages when app is open
-        onMessage(messaging, (payload) => {
-            console.log('Message received. ', payload);
-        });
 
     </script>
 </body>
