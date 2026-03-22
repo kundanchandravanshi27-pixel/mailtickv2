@@ -14,9 +14,10 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function(payload) {
-  const notificationTitle = payload.notification.title;
+  console.log('Received background message ', payload);
+  const notificationTitle = payload.notification?.title || "New Email";
   const notificationOptions = {
-    body: payload.notification.body,
+    body: payload.notification?.body || "You have a new message.",
     icon: 'https://www.svgrepo.com/show/475656/google-color.svg'
   };
   self.registration.showNotification(notificationTitle, notificationOptions);
