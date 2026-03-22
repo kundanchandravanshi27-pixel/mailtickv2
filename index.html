@@ -26,7 +26,7 @@
         }
         
         .glass {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -34,7 +34,6 @@
 
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* Smooth Page Transition */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
 
@@ -51,17 +50,21 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Clean links in email view */
-        .email-body-text a { color: #60a5fa; text-decoration: underline; word-break: break-all; }
+        /* Fixed AI Button Style */
+        .btn-ai-solid {
+            background-color: #1e3a8a !important; /* Solid dark blue */
+            color: #93c5fd !important;
+            border: 1px solid #1e40af !important;
+        }
     </style>
 </head>
-<body class="h-screen w-full flex justify-center bg-gray-950" oncontextmenu="return false;">
+<!-- FIXED: h-[100dvh] instead of h-screen solves the bottom cut-off issue on mobile -->
+<body class="h-[100dvh] w-full flex justify-center bg-gray-950" oncontextmenu="return false;">
 
-    <!-- Main Container -->
-    <div class="w-full max-w-3xl h-full relative flex flex-col shadow-2xl overflow-hidden bg-gray-900 border-x border-gray-800">
+    <div class="w-full max-w-3xl h-full relative flex flex-col shadow-2xl overflow-hidden bg-[#0f172a] border-x border-gray-800">
 
         <!-- ================= LOGIN SCREEN ================= -->
-        <div id="login-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 bg-gray-900 transition-opacity duration-500">
+        <div id="login-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 bg-[#0f172a] transition-opacity duration-500">
             <div class="text-6xl text-blue-500 mb-6"><i class="fa-solid fa-envelope-open-text"></i></div>
             <h1 class="text-5xl font-bold mb-3 tracking-tight">Mailtick</h1>
             <p class="text-gray-400 text-center mb-10 text-lg">Smart AI-powered email management.</p>
@@ -74,106 +77,81 @@
         <!-- ================= MAIN APP SCREEN ================= -->
         <div id="app-screen" class="hidden flex-col h-full w-full relative">
             
-            <!-- Header -->
-            <header class="pt-10 pb-4 px-6 glass flex justify-between items-center z-10 sticky top-0 border-b border-gray-800">
+            <header class="pt-10 pb-4 px-5 glass flex justify-between items-center z-10 sticky top-0 border-b border-gray-800">
                 <div class="flex-1 min-w-0 pr-4">
-                    <h2 class="text-3xl font-bold tracking-wide flex items-center gap-3 truncate" id="header-title">
-                        Inbox
-                    </h2>
-                    <p class="text-sm text-blue-400 font-medium mt-1 truncate" id="user-email-display">Loading...</p>
+                    <h2 class="text-3xl font-bold tracking-wide flex items-center gap-3 truncate" id="header-title">Inbox</h2>
+                    <p class="text-xs text-blue-400 font-medium mt-1 truncate" id="user-email-display">Loading...</p>
                 </div>
-                <button id="btn-sync" class="w-12 h-12 flex-shrink-0 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xl active:scale-90 transition-transform">
+                <button id="btn-sync" class="w-10 h-10 flex-shrink-0 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg active:scale-90 transition-transform">
                     <i class="fa-solid fa-rotate"></i>
                 </button>
             </header>
 
-            <div id="sync-indicator" class="hidden absolute top-28 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-sm px-5 py-2 rounded-full shadow-lg z-20 items-center gap-3">
-                <div class="loader"></div> Syncing Emails...
+            <div id="sync-indicator" class="hidden absolute top-28 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg z-20 items-center gap-2">
+                <div class="loader !w-4 !h-4"></div> Syncing Emails...
             </div>
 
-            <!-- Email List Content -->
-            <main id="email-list" class="flex-1 overflow-y-auto hide-scrollbar p-4 md:p-6 space-y-4 pb-28">
-                <!-- Emails/Folders injected here -->
+            <main id="email-list" class="flex-1 overflow-y-auto hide-scrollbar p-4 md:p-6 space-y-4 pb-[100px]">
+                <!-- Emails injected here -->
             </main>
 
-            <!-- Bottom Navigation -->
-            <nav class="absolute bottom-0 w-full glass pb-6 pt-3 px-2 md:px-10 flex justify-around items-center z-20 border-t border-gray-800">
+            <nav class="absolute bottom-0 w-full glass pb-8 pt-4 px-2 md:px-10 flex justify-around items-center z-20 border-t border-gray-800 rounded-t-2xl">
                 <button class="nav-btn text-blue-400 flex flex-col items-center gap-1 w-16" data-tab="inbox">
-                    <i class="fa-solid fa-inbox text-2xl"></i>
-                    <span class="text-[10px] font-semibold mt-1">Inbox</span>
+                    <i class="fa-solid fa-inbox text-2xl"></i><span class="text-[10px] font-semibold mt-1">Inbox</span>
                 </button>
                 <button class="nav-btn text-gray-400 flex flex-col items-center gap-1 w-16" data-tab="important">
-                    <i class="fa-solid fa-star text-2xl"></i>
-                    <span class="text-[10px] font-semibold mt-1">Important</span>
+                    <i class="fa-solid fa-star text-2xl"></i><span class="text-[10px] font-semibold mt-1">Important</span>
                 </button>
                 <button class="nav-btn text-gray-400 flex flex-col items-center gap-1 w-16" data-tab="folders">
-                    <i class="fa-solid fa-folder-open text-2xl"></i>
-                    <span class="text-[10px] font-semibold mt-1">Folders</span>
+                    <i class="fa-solid fa-folder-open text-2xl"></i><span class="text-[10px] font-semibold mt-1">Folders</span>
                 </button>
                 <button class="nav-btn text-gray-400 flex flex-col items-center gap-1 w-16" data-tab="spam">
-                    <i class="fa-solid fa-shield-virus text-2xl"></i>
-                    <span class="text-[10px] font-semibold mt-1">Fraud</span>
+                    <i class="fa-solid fa-shield-virus text-2xl"></i><span class="text-[10px] font-semibold mt-1">Fraud</span>
                 </button>
             </nav>
         </div>
 
         <!-- ================= FULL EMAIL VIEW ================= -->
-        <div id="full-email-view" class="hidden absolute inset-0 z-40 bg-gray-900 flex-col slide-in-right">
+        <div id="full-email-view" class="hidden absolute inset-0 z-40 bg-[#0f172a] flex-col slide-in-right">
             <header class="pt-10 pb-4 px-4 glass flex items-center gap-4 sticky top-0 border-b border-gray-800 z-10">
-                <button id="btn-close-email" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center text-xl active:scale-90 flex-shrink-0">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </button>
+                <button id="btn-close-email" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center text-xl active:scale-90 flex-shrink-0"><i class="fa-solid fa-arrow-left"></i></button>
                 <h2 class="text-xl font-bold truncate flex-1">Email View</h2>
             </header>
-            <div class="flex-1 overflow-y-auto hide-scrollbar p-5 md:p-8 select-text">
-                <h1 id="fv-subject" class="text-2xl font-bold mb-5 text-white leading-snug break-words">Subject</h1>
+            <div class="flex-1 overflow-y-auto hide-scrollbar p-5 select-text">
+                <h1 id="fv-subject" class="text-xl font-bold mb-4 text-white leading-snug break-words">Subject</h1>
                 <div class="flex justify-between items-start mb-6 pb-6 border-b border-gray-800">
                     <div class="flex-1 min-w-0 pr-4">
-                        <div id="fv-sender-name" class="font-bold text-gray-200 text-lg truncate">Sender Name</div>
-                        <div id="fv-sender-email" class="text-sm text-blue-400 mt-1 truncate">sender@email.com</div>
+                        <div id="fv-sender-name" class="font-bold text-gray-200 text-base truncate">Sender Name</div>
+                        <div id="fv-sender-email" class="text-xs text-blue-400 mt-1 truncate">email</div>
                     </div>
-                    <div id="fv-date" class="text-xs text-gray-500 text-right mt-1 flex-shrink-0 whitespace-nowrap">Date</div>
+                    <div id="fv-date" class="text-[10px] text-gray-500 text-right mt-1 flex-shrink-0 whitespace-nowrap">Date</div>
                 </div>
-                <div id="fv-body" class="text-gray-300 text-base leading-relaxed whitespace-pre-wrap break-words email-body-text">
-                    Body content...
-                </div>
+                <div id="fv-body" class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">Body</div>
             </div>
         </div>
 
         <!-- ================= MODALS ================= -->
-        
-        <!-- AI Summary Modal -->
-        <div id="summary-modal" class="hidden absolute inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end justify-center">
-            <div class="glass w-full h-[70%] rounded-t-3xl p-6 flex flex-col transform translate-y-full transition-transform duration-300" id="summary-content-box">
+        <div id="summary-modal" class="hidden absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center">
+            <div class="glass w-full h-[75%] rounded-t-3xl p-6 flex flex-col transform translate-y-full transition-transform duration-300" id="summary-content-box">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-600 pb-3">
                     <h3 class="text-xl font-bold flex items-center gap-2 text-blue-400">
                         <i class="fa-solid fa-sparkles"></i> AI Summary 
-                        <span id="ai-model-badge" class="text-[10px] bg-blue-600/30 text-blue-300 px-2 py-0.5 rounded-full font-mono">Loading...</span>
+                        <span id="ai-model-badge" class="text-[10px] bg-blue-900 text-blue-300 px-2 py-0.5 rounded-full">Connecting...</span>
                     </h3>
                     <button id="btn-close-summary" class="text-gray-400 hover:text-white text-3xl p-2 leading-none">&times;</button>
                 </div>
-                <div id="ai-typing-area" class="text-gray-200 leading-relaxed overflow-y-auto flex-1 text-base pr-2 select-text">
-                </div>
+                <div id="ai-typing-area" class="text-gray-200 leading-relaxed overflow-y-auto flex-1 text-sm md:text-base pr-2 select-text"></div>
             </div>
         </div>
 
-        <!-- Action Modal -->
         <div id="action-modal" class="hidden absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-6">
             <div class="glass w-full max-w-sm rounded-2xl p-4 flex flex-col gap-2 scale-90 opacity-0 transition-all duration-300" id="action-box">
                 <h4 class="text-center text-gray-400 text-xs uppercase tracking-wider mb-2">Email Actions</h4>
-                <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-white flex items-center gap-3 active:bg-white/20" data-action="mark">
-                    <i class="fa-solid fa-thumbtack text-blue-400 w-5 text-center"></i> Pin / Unpin Sender
-                </button>
-                <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-white flex items-center gap-3 active:bg-white/20" data-action="category">
-                    <i class="fa-solid fa-folder-plus text-green-400 w-5 text-center"></i> Add to Category
-                </button>
-                <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-orange-400 flex items-center gap-3 active:bg-white/20" data-action="fraud">
-                    <i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Mark as Fraud
-                </button>
-                <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-red-400 flex items-center gap-3 active:bg-white/20" data-action="delete">
-                    <i class="fa-solid fa-trash w-5 text-center"></i> Delete Permanently
-                </button>
-                <button id="btn-close-actions" class="mt-3 p-3 text-center text-gray-400 font-bold active:text-white border-t border-gray-700">Cancel</button>
+                <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-white flex items-center gap-3" data-action="mark"><i class="fa-solid fa-thumbtack text-blue-400 w-5 text-center"></i> Pin Sender</button>
+                <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-white flex items-center gap-3" data-action="category"><i class="fa-solid fa-folder-plus text-green-400 w-5 text-center"></i> Add to Category</button>
+                <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-orange-400 flex items-center gap-3" data-action="fraud"><i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Mark as Fraud</button>
+                <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-red-400 flex items-center gap-3" data-action="delete"><i class="fa-solid fa-trash w-5 text-center"></i> Delete</button>
+                <button id="btn-close-actions" class="mt-2 p-3 text-center text-gray-400 font-bold border-t border-gray-700">Cancel</button>
             </div>
         </div>
 
@@ -182,12 +160,9 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // ================= CONFIGURATION =================
         const GOOGLE_CLIENT_ID = "30172584711-9l229pscpqpf478qvtp2ronplmbrtha0.apps.googleusercontent.com"; 
-        
-        // ✨ DUAL AI KEYS ADDED FROM YOUR REFERENCE CODE ✨
         const PRIMARY_GEMINI_API_KEY = "AIzaSyDQlnzpsQ7GZG8zUlRRCSL_HzZ-Woi63pQ"; 
         const FALLBACK_GEMINI_API_KEY = "AIzaSyCKgmai2NXGMeQjF0_0xmRUcxsaTpGdTV4"; 
 
@@ -201,12 +176,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ================= STATE =================
         let accessToken = null;
         let currentUser = null;
         let currentTab = 'inbox'; 
         let allEmails = [];
-        let spamKeywords = ['free offer', 'free gift', 'prize', 'urgent', 'winner', 'lottery', 'viagra', 'earn money fast', 'crypto', 'giveaway', 'claim now', 'cash prize', 'jackpot', 'bank alert', 'account suspended'];
+        let spamKeywords = ['free offer', 'free gift', 'prize', 'urgent', 'winner', 'lottery', 'viagra', 'earn money fast', 'crypto', 'giveaway', 'claim now', 'cash prize'];
         let markedSenders = [];
         let customCategoriesMap = {}; 
         let companyDomains = ['amazon', 'paypal', 'netflix', 'bank', 'apple', 'google', 'microsoft'];
@@ -214,15 +188,33 @@
         let selectedEmailId = null;
         let isScrolling = false; 
 
-        // ================= GOOGLE AUTHENTICATION =================
-        let tokenClient;
+        // ================= SESSION PERSISTENCE (FIXES AUTO-LOGOUT) =================
         window.onload = () => {
-            tokenClient = google.accounts.oauth2.initTokenClient({
+            const savedUser = localStorage.getItem('mailtick_user');
+            if(savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('user-email-display').innerText = currentUser.email;
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                document.getElementById('app-screen').classList.add('flex');
+                initApp(false); // Load DB without immediate sync
+                requestNotificationPermission(); // Ask for push notifications
+            }
+
+            google.accounts.oauth2.initTokenClient({
                 client_id: GOOGLE_CLIENT_ID,
                 scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/gmail.readonly',
                 callback: handleCredentialResponse,
             });
-            document.getElementById("btn-login").addEventListener("click", () => tokenClient.requestAccessToken());
+
+            document.getElementById("btn-login").addEventListener("click", () => {
+                // We use global tokenClient created by initTokenClient
+                google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/gmail.readonly',
+                    callback: handleCredentialResponse,
+                }).requestAccessToken();
+            });
         };
 
         async function handleCredentialResponse(response) {
@@ -231,45 +223,52 @@
                 try {
                     const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
                     const profile = await profileRes.json();
-                    currentUser = { email: profile.email };
-                    document.getElementById('user-email-display').innerText = currentUser.email;
                     
-                    document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
-                    setTimeout(() => {
-                        document.getElementById('login-screen').classList.add('hidden');
-                        document.getElementById('app-screen').classList.remove('hidden');
-                        document.getElementById('app-screen').classList.add('flex');
-                        initApp();
-                    }, 500);
+                    currentUser = { email: profile.email };
+                    localStorage.setItem('mailtick_user', JSON.stringify(currentUser)); // SAVE SESSION
+                    
+                    document.getElementById('user-email-display').innerText = currentUser.email;
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('app-screen').classList.remove('hidden');
+                    document.getElementById('app-screen').classList.add('flex');
+                    initApp(true); 
+                    requestNotificationPermission();
                 } catch(e) { alert("Login failed."); }
             }
         }
 
-        async function initApp() {
+        async function initApp(shouldSync) {
             await loadUserSettings();
             await loadEmailsFromFirestore();
-            syncGmail(); 
+            if(shouldSync) syncGmail(); 
         }
 
         async function loadUserSettings() {
             try {
-                const markRef = doc(db, "users", currentUser.email, "settings", "marked_senders");
-                const markSnap = await getDoc(markRef);
+                const markSnap = await getDoc(doc(db, "users", currentUser.email, "settings", "marked_senders"));
                 if (markSnap.exists() && markSnap.data().senders) markedSenders = markSnap.data().senders;
 
-                const catRef = doc(db, "users", currentUser.email, "settings", "custom_categories");
-                const catSnap = await getDoc(catRef);
+                const catSnap = await getDoc(doc(db, "users", currentUser.email, "settings", "custom_categories"));
                 if (catSnap.exists() && catSnap.data().map) customCategoriesMap = catSnap.data().map;
-            } catch(e) { console.log(e); }
+            } catch(e) {}
         }
 
-        // ================= GMAIL SYNC & CLEANER =================
-        document.getElementById('btn-sync').addEventListener('click', syncGmail);
+        // ================= GMAIL SYNC & STRICT HTML CLEANER =================
+        document.getElementById('btn-sync').addEventListener('click', () => {
+            if(!accessToken) {
+                alert("Please click 'Sync' button to re-authenticate session with Google.");
+                google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/gmail.readonly',
+                    callback: handleCredentialResponse,
+                }).requestAccessToken();
+                return;
+            }
+            syncGmail();
+        });
 
         async function syncGmail() {
-            if(!accessToken) return;
             showSync(true);
-
             try {
                 const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=40', { headers: { Authorization: `Bearer ${accessToken}` } });
                 const listData = await listRes.json();
@@ -293,25 +292,17 @@
             showSync(false);
         }
 
-        // ✨ HTML & TEXT CLEANER (FIXED CODING/SYMBOLS ISSUE) ✨
-        function cleanEmailContent(rawText) {
-            if(!rawText) return "No text content.";
-            
-            // 1. Convert HTML to plain text safely
-            let text = rawText;
-            if(text.includes('<html') || text.includes('<!DOCTYPE') || text.includes('<body')) {
-                const doc = new DOMParser().parseFromString(text, 'text/html');
-                text = doc.body.textContent || doc.body.innerText || "";
+        // STRICT HTML CLEANER (Fixes Instagram/DOCTYPE issues)
+        function cleanStrictHTML(rawText) {
+            if(!rawText) return "No content.";
+            try {
+                let doc = new DOMParser().parseFromString(rawText, 'text/html');
+                let text = doc.body.textContent || doc.body.innerText || "";
+                // Remove weird blank lines and CSS remnants
+                return text.replace(/\s+/g, ' ').trim();
+            } catch(e) {
+                return rawText.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
             }
-
-            // 2. Remove CSS/Style blocks and giant tracking links
-            text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-            text = text.replace(/\{[\s\S]*?\}/g, ''); // Remove CSS properties
-            text = text.replace(/https?:\/\/[^\s]+/g, '[Link Removed for Readability]');
-            
-            // 3. Clean up white spaces
-            text = text.replace(/\n{3,}/g, '\n\n').trim();
-            return text || "No readable content found.";
         }
 
         function parseGmailMessage(message) {
@@ -328,7 +319,6 @@
             }
 
             let body = "";
-            // Try to find Plain Text first, then HTML
             let part = message.payload.parts ? message.payload.parts.find(p => p.mimeType === 'text/plain') : null;
             if(!part && message.payload.parts) part = message.payload.parts.find(p => p.mimeType === 'text/html');
             if(!part && message.payload.parts && message.payload.parts[0]?.parts) {
@@ -341,8 +331,7 @@
                 body = decodeBase64(message.payload.body.data);
             }
 
-            // Apply Cleaner
-            body = cleanEmailContent(body);
+            body = cleanStrictHTML(body);
 
             let pureEmail = sender.toLowerCase();
             const emailMatch = sender.match(/<([^>]+)>/);
@@ -350,7 +339,7 @@
 
             return {
                 messageId: message.id, sender: sender, pureEmail: pureEmail,
-                subject: subject, body: body.substring(0, 3500), 
+                subject: subject, body: body.substring(0, 3000), 
                 timestamp: new Date(dateStr).getTime() || Date.now(), category: 'inbox'
             };
         }
@@ -390,9 +379,10 @@
             let headerTitle = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
             if(currentTab === 'spam') headerTitle = "Fraud Emails";
             else if(currentTab === 'folders') headerTitle = "Your Folders";
-            document.getElementById('header-title').innerHTML = headerTitle;
-
+            
+            // FOLDER PAGE (Separate View Logic)
             if (currentTab === 'folders') {
+                document.getElementById('header-title').innerHTML = headerTitle;
                 const uniqueFolders = {};
                 allEmails.forEach(e => {
                     if(!['inbox', 'important', 'spam'].includes(e.category)) uniqueFolders[e.category] = (uniqueFolders[e.category] || 0) + 1;
@@ -400,25 +390,22 @@
 
                 const foldersArr = Object.keys(uniqueFolders);
                 if(foldersArr.length === 0) {
-                    container.innerHTML = `<div class="text-center text-gray-500 mt-20"><i class="fa-solid fa-folder-open text-4xl mb-3"></i><p>No custom folders yet.</p><p class="text-xs mt-2">Long press an email to create a category.</p></div>`;
+                    container.innerHTML = `<div class="text-center text-gray-500 mt-20"><i class="fa-solid fa-folder-open text-4xl mb-3"></i><p>No custom folders yet.</p></div>`;
                     return;
                 }
 
                 foldersArr.forEach((folder, idx) => {
                     const el = document.createElement('div');
-                    el.className = `glass p-5 rounded-xl flex justify-between items-center active:scale-95 transition-transform animate-fade-in`;
+                    el.className = `glass p-4 rounded-xl flex justify-between items-center active:scale-95 transition-transform animate-fade-in mb-3`;
                     el.style.animationDelay = `${idx * 0.05}s`;
                     el.innerHTML = `
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl"><i class="fa-solid fa-folder"></i></div>
-                            <div class="text-lg font-bold text-gray-100 capitalize">${folder}</div>
-                        </div>
-                        <div class="text-sm font-semibold text-gray-400 bg-white/10 px-3 py-1 rounded-full">${uniqueFolders[folder]} Emails</div>
+                        <div class="flex items-center gap-4"><div class="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-folder"></i></div><div class="text-base font-bold text-gray-100 capitalize">${folder}</div></div>
+                        <div class="text-xs font-semibold text-gray-400 bg-white/10 px-3 py-1 rounded-full">${uniqueFolders[folder]} Emails</div>
                     `;
                     el.addEventListener('click', () => {
                         currentTab = folder;
-                        document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('text-blue-400'); b.classList.add('text-gray-400'); });
-                        document.getElementById('header-title').innerHTML = `<button onclick="document.querySelector('[data-tab=\\'folders\\']').click()" class="mr-2 text-blue-400"><i class="fa-solid fa-arrow-left"></i></button> <span class="capitalize">${folder}</span>`;
+                        // Add Back Button to Header for Category Page
+                        document.getElementById('header-title').innerHTML = `<button onclick="document.querySelector('[data-tab=\\'folders\\']').click()" class="mr-3 text-blue-400 hover:text-blue-300"><i class="fa-solid fa-arrow-left"></i></button><span class="capitalize">${folder}</span>`;
                         renderEmailsList();
                     });
                     container.appendChild(el);
@@ -426,11 +413,13 @@
                 return;
             }
 
+            document.getElementById('header-title').innerHTML = headerTitle;
             renderEmailsList();
         }
 
         function renderEmailsList() {
             const container = document.getElementById('email-list');
+            container.innerHTML = '';
             let displayEmails = allEmails.filter(e => e.category === currentTab);
 
             displayEmails.sort((a, b) => {
@@ -441,30 +430,30 @@
             });
 
             if(displayEmails.length === 0) {
-                container.innerHTML = `<div class="text-center text-gray-500 mt-20"><p>No emails found here.</p></div>`;
+                container.innerHTML = `<div class="text-center text-gray-500 mt-20"><p>No emails found.</p></div>`;
                 return;
             }
 
             displayEmails.forEach((email, index) => {
                 const isMarked = markedSenders.includes(email.pureEmail);
                 const el = document.createElement('div');
-                el.className = `glass p-4 rounded-xl relative animate-fade-in flex flex-col gap-2 ${isMarked ? 'border-l-4 border-l-blue-500' : 'border-l-4 border-l-transparent'}`;
+                el.className = `glass p-4 rounded-xl relative animate-fade-in flex flex-col gap-2 mb-3 ${isMarked ? 'border-l-4 border-l-blue-500' : 'border-l-4 border-l-transparent'}`;
                 el.style.animationDelay = `${index * 0.03}s`;
                 
                 const senderName = email.sender.split('<')[0].replace(/"/g, '').trim();
 
                 el.innerHTML = `
                     <div class="flex justify-between items-start gap-2">
-                        <div class="font-bold text-gray-100 flex items-center gap-2 text-sm md:text-base truncate flex-1">
+                        <div class="font-bold text-gray-100 flex items-center gap-2 text-sm truncate flex-1">
                             ${isMarked ? '<i class="fa-solid fa-thumbtack text-blue-400 text-xs"></i>' : ''}
                             <span class="truncate">${senderName}</span>
                         </div>
-                        <div class="text-[10px] text-gray-400 whitespace-nowrap pt-1">${new Date(email.timestamp).toLocaleDateString()}</div>
+                        <div class="text-[10px] text-gray-400 whitespace-nowrap pt-0.5">${new Date(email.timestamp).toLocaleDateString()}</div>
                     </div>
                     <div class="text-sm font-semibold text-gray-200 line-clamp-1">${email.subject}</div>
-                    <div class="text-xs text-gray-500 line-clamp-2 leading-relaxed">${email.body}</div>
                     <div class="flex justify-end mt-1">
-                        <button class="bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 text-xs py-1.5 px-4 rounded-lg font-bold transition-colors btn-ai z-10">
+                        <!-- FIX: Custom class btn-ai-solid ensures white box issue is gone -->
+                        <button class="btn-ai-solid text-[11px] py-1.5 px-3 rounded-md font-bold transition-transform active:scale-95 btn-ai z-10">
                             <i class="fa-solid fa-sparkles mr-1"></i> AI Summary
                         </button>
                     </div>
@@ -509,6 +498,7 @@
             document.getElementById('full-email-view').classList.remove('flex');
         });
 
+        // ================= LONG PRESS =================
         function handleTouchStart(e, msgId) {
             longPressTimer = setTimeout(() => {
                 selectedEmailId = msgId;
@@ -528,7 +518,6 @@
             btn.addEventListener('click', async (e) => {
                 const action = e.currentTarget.getAttribute('data-action');
                 if(!selectedEmailId) return;
-                
                 const emailObj = allEmails.find(e => e.messageId === selectedEmailId);
                 const emailRef = doc(db, "users", currentUser.email, "emails", selectedEmailId);
 
@@ -558,7 +547,7 @@
             });
         });
 
-        // ✨ AI FALLBACK SYSTEM (USING 2 KEYS & ENDPOINTS) ✨
+        // ✨ EXACT AI FALLBACK LOOP FROM YOUR REFERENCE CODE ✨
         async function openSummaryModal(email) {
             const modal = document.getElementById('summary-modal');
             const contentBox = document.getElementById('summary-content-box');
@@ -566,42 +555,60 @@
             const badge = document.getElementById('ai-model-badge');
             
             textArea.innerHTML = `<div class="flex flex-col items-center justify-center h-full gap-4 text-blue-400"><div class="loader !w-8 !h-8 border-4"></div><div class="animate-pulse font-medium">AI is reading...</div></div>`;
-            badge.innerText = "Connecting...";
+            badge.innerText = "Processing...";
             modal.classList.remove('hidden');
             setTimeout(() => contentBox.classList.remove('translate-y-full'), 10);
 
             let summaryText = "";
-            let usedModelName = "";
+            let currentModel = "gemini-2.5-flash";
+            let currentApiKey = PRIMARY_GEMINI_API_KEY;
+            let attempts = 0;
+            const maxAttempts = 2; 
 
-            try {
-                // TRY PRIMARY KEY (2.5 Flash)
-                usedModelName = "2.5-Flash";
-                summaryText = await callGeminiAPI("gemini-2.5-flash", PRIMARY_GEMINI_API_KEY, email.body);
-            } catch (err1) {
-                console.log("Primary AI Failed, Switching to Fallback...", err1);
+            // Exact loop from your reference
+            while (attempts < maxAttempts) {
                 try {
-                    // TRY FALLBACK KEY (3.1 Pro Preview)
-                    usedModelName = "3.1-Pro";
-                    summaryText = await callGeminiAPI("gemini-3.1-pro-preview", FALLBACK_GEMINI_API_KEY, email.body);
-                } catch (err2) {
-                    console.log("Fallback AI also failed.", err2);
-                    usedModelName = "Error";
-                    summaryText = "❌ Failed to generate summary. Both AI models are temporarily unavailable or API keys have reached their limit.";
+                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${currentApiKey}`;
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: `Summarize this email clearly in 3 short bullet points In under 60 words:\n\n${email.body}` }] }] })
+                    });
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        const errorMsg = data.error?.message || "";
+                        if (currentModel === "gemini-2.5-flash" && (errorMsg.includes("not found") || errorMsg.includes("demand"))) {
+                            currentModel = "gemini-3.1-pro-preview";
+                            currentApiKey = FALLBACK_GEMINI_API_KEY;
+                            attempts++;
+                            continue; 
+                        }
+                        summaryText = `API Error: ${errorMsg}`;
+                        break;
+                    }
+
+                    if (data.candidates && data.candidates.length > 0) {
+                        summaryText = data.candidates[0].content.parts[0].text;
+                        break; // Success! Exit loop
+                    } else {
+                        summaryText = "API Error: No response generated.";
+                        break;
+                    }
+                } catch (error) {
+                    if (currentModel === "gemini-2.5-flash" && attempts < maxAttempts - 1) { 
+                         currentModel = "gemini-3.1-pro-preview";
+                         currentApiKey = FALLBACK_GEMINI_API_KEY; 
+                         attempts++;
+                         continue;
+                    }
+                    summaryText = "Network Error: Failed to connect.";
+                    break;
                 }
             }
 
-            badge.innerText = `Model: ${usedModelName}`;
+            badge.innerText = currentModel.replace("gemini-", "");
             typeText(textArea, summaryText);
-        }
-
-        async function callGeminiAPI(model, apiKey, textContent) {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: [{ parts: [{ text: `Summarize this email clearly in exactly 3 short bullet points:\n\n${textContent}` }] }] })
-            });
-            const data = await res.json();
-            if(!res.ok || data.error) throw new Error(data.error?.message || "Unknown API Error");
-            return data.candidates[0].content.parts[0].text;
         }
 
         function typeText(element, text) {
@@ -617,7 +624,7 @@
                         tag += '>'; element.innerHTML += tag; i++;
                     } else { element.innerHTML += formattedText.charAt(i); i++; }
                     element.scrollTop = element.scrollHeight; 
-                    setTimeout(typeWriter, 15);
+                    setTimeout(typeWriter, 10);
                 } else { element.innerHTML += '<span class="cursor-blink font-bold text-blue-500 ml-1">|</span>'; }
             }
             typeWriter();
@@ -633,6 +640,12 @@
             const btnIcon = document.querySelector('#btn-sync i');
             if(show) { ind.classList.remove('hidden'); ind.classList.add('flex'); btnIcon.classList.add('fa-spin'); } 
             else { ind.classList.add('hidden'); ind.classList.remove('flex'); btnIcon.classList.remove('fa-spin'); }
+        }
+
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                Notification.requestPermission();
+            }
         }
     </script>
 </body>
