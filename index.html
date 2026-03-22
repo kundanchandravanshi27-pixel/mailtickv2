@@ -50,11 +50,14 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Clean links in email view */
+        .email-body-text a { color: #60a5fa; text-decoration: underline; word-break: break-all; }
     </style>
 </head>
 <body class="h-screen w-full flex justify-center bg-gray-950" oncontextmenu="return false;">
 
-    <!-- Main Container (Responsive for Desktop & Mobile) -->
+    <!-- Main Container -->
     <div class="w-full max-w-3xl h-full relative flex flex-col shadow-2xl overflow-hidden bg-gray-900 border-x border-gray-800">
 
         <!-- ================= LOGIN SCREEN ================= -->
@@ -73,13 +76,13 @@
             
             <!-- Header -->
             <header class="pt-10 pb-4 px-6 glass flex justify-between items-center z-10 sticky top-0 border-b border-gray-800">
-                <div>
-                    <h2 class="text-3xl font-bold tracking-wide flex items-center gap-3" id="header-title">
+                <div class="flex-1 min-w-0 pr-4">
+                    <h2 class="text-3xl font-bold tracking-wide flex items-center gap-3 truncate" id="header-title">
                         Inbox
                     </h2>
-                    <p class="text-sm text-blue-400 font-medium mt-1" id="user-email-display">Loading...</p>
+                    <p class="text-sm text-blue-400 font-medium mt-1 truncate" id="user-email-display">Loading...</p>
                 </div>
-                <button id="btn-sync" class="w-12 h-12 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xl active:scale-90 transition-transform">
+                <button id="btn-sync" class="w-12 h-12 flex-shrink-0 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xl active:scale-90 transition-transform">
                     <i class="fa-solid fa-rotate"></i>
                 </button>
             </header>
@@ -90,7 +93,7 @@
 
             <!-- Email List Content -->
             <main id="email-list" class="flex-1 overflow-y-auto hide-scrollbar p-4 md:p-6 space-y-4 pb-28">
-                <!-- Emails/Folders injected here via JS -->
+                <!-- Emails/Folders injected here -->
             </main>
 
             <!-- Bottom Navigation -->
@@ -117,22 +120,21 @@
         <!-- ================= FULL EMAIL VIEW ================= -->
         <div id="full-email-view" class="hidden absolute inset-0 z-40 bg-gray-900 flex-col slide-in-right">
             <header class="pt-10 pb-4 px-4 glass flex items-center gap-4 sticky top-0 border-b border-gray-800 z-10">
-                <button id="btn-close-email" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center text-xl active:scale-90">
+                <button id="btn-close-email" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center text-xl active:scale-90 flex-shrink-0">
                     <i class="fa-solid fa-arrow-left"></i>
                 </button>
                 <h2 class="text-xl font-bold truncate flex-1">Email View</h2>
             </header>
-            <div class="flex-1 overflow-y-auto hide-scrollbar p-6 select-text">
-                <h1 id="fv-subject" class="text-2xl font-bold mb-4 text-white leading-tight">Subject</h1>
+            <div class="flex-1 overflow-y-auto hide-scrollbar p-5 md:p-8 select-text">
+                <h1 id="fv-subject" class="text-2xl font-bold mb-5 text-white leading-snug break-words">Subject</h1>
                 <div class="flex justify-between items-start mb-6 pb-6 border-b border-gray-800">
-                    <div>
-                        <div id="fv-sender-name" class="font-bold text-gray-200">Sender Name</div>
-                        <div id="fv-sender-email" class="text-sm text-blue-400 mt-1">sender@email.com</div>
+                    <div class="flex-1 min-w-0 pr-4">
+                        <div id="fv-sender-name" class="font-bold text-gray-200 text-lg truncate">Sender Name</div>
+                        <div id="fv-sender-email" class="text-sm text-blue-400 mt-1 truncate">sender@email.com</div>
                     </div>
-                    <div id="fv-date" class="text-xs text-gray-500 text-right mt-1">Date</div>
+                    <div id="fv-date" class="text-xs text-gray-500 text-right mt-1 flex-shrink-0 whitespace-nowrap">Date</div>
                 </div>
-                <!-- Clean body rendering -->
-                <div id="fv-body" class="text-gray-300 text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words">
+                <div id="fv-body" class="text-gray-300 text-base leading-relaxed whitespace-pre-wrap break-words email-body-text">
                     Body content...
                 </div>
             </div>
@@ -146,51 +148,48 @@
                 <div class="flex justify-between items-center mb-4 border-b border-gray-600 pb-3">
                     <h3 class="text-xl font-bold flex items-center gap-2 text-blue-400">
                         <i class="fa-solid fa-sparkles"></i> AI Summary 
-                        <span id="ai-model-badge" class="text-[10px] bg-blue-600/30 text-blue-300 px-2 py-0.5 rounded-full">Gemini</span>
+                        <span id="ai-model-badge" class="text-[10px] bg-blue-600/30 text-blue-300 px-2 py-0.5 rounded-full font-mono">Loading...</span>
                     </h3>
                     <button id="btn-close-summary" class="text-gray-400 hover:text-white text-3xl p-2 leading-none">&times;</button>
                 </div>
-                <div id="ai-typing-area" class="text-gray-200 leading-relaxed overflow-y-auto flex-1 text-sm md:text-base pr-2 select-text">
-                    <!-- Typing effect output -->
+                <div id="ai-typing-area" class="text-gray-200 leading-relaxed overflow-y-auto flex-1 text-base pr-2 select-text">
                 </div>
             </div>
         </div>
 
-        <!-- Action Modal (Long Press) -->
+        <!-- Action Modal -->
         <div id="action-modal" class="hidden absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-6">
             <div class="glass w-full max-w-sm rounded-2xl p-4 flex flex-col gap-2 scale-90 opacity-0 transition-all duration-300" id="action-box">
                 <h4 class="text-center text-gray-400 text-xs uppercase tracking-wider mb-2">Email Actions</h4>
-                
                 <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-white flex items-center gap-3 active:bg-white/20" data-action="mark">
                     <i class="fa-solid fa-thumbtack text-blue-400 w-5 text-center"></i> Pin / Unpin Sender
                 </button>
-                
                 <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-white flex items-center gap-3 active:bg-white/20" data-action="category">
                     <i class="fa-solid fa-folder-plus text-green-400 w-5 text-center"></i> Add to Category
                 </button>
-
                 <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-orange-400 flex items-center gap-3 active:bg-white/20" data-action="fraud">
                     <i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Mark as Fraud
                 </button>
-                
                 <button class="action-btn bg-white/10 p-3.5 rounded-lg text-left text-red-400 flex items-center gap-3 active:bg-white/20" data-action="delete">
                     <i class="fa-solid fa-trash w-5 text-center"></i> Delete Permanently
                 </button>
-                
                 <button id="btn-close-actions" class="mt-3 p-3 text-center text-gray-400 font-bold active:text-white border-t border-gray-700">Cancel</button>
             </div>
         </div>
 
     </div>
 
-    <!-- Firebase SDKs (Modular V9) -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         // ================= CONFIGURATION =================
         const GOOGLE_CLIENT_ID = "30172584711-9l229pscpqpf478qvtp2ronplmbrtha0.apps.googleusercontent.com"; 
-        const GEMINI_API_KEY = "AIzaSyCm0_qabzPi2CLXHeRC56ksRxLfq37pqMU"; 
+        
+        // ✨ DUAL AI KEYS ADDED FROM YOUR REFERENCE CODE ✨
+        const PRIMARY_GEMINI_API_KEY = "AIzaSyDQlnzpsQ7GZG8zUlRRCSL_HzZ-Woi63pQ"; 
+        const FALLBACK_GEMINI_API_KEY = "AIzaSyCKgmai2NXGMeQjF0_0xmRUcxsaTpGdTV4"; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyDPVa0eYZpxYh6Q5vyhSf0IogTkedc72tE",
@@ -207,48 +206,31 @@
         let currentUser = null;
         let currentTab = 'inbox'; 
         let allEmails = [];
-        
-        let spamKeywords = [
-            'free offer', 'free gift', 'prize', 'urgent', 'winner', 'lottery', 
-            'viagra', 'earn money fast', 'crypto', 'giveaway', 'claim now', 
-            'cash prize', 'jackpot', 'bank alert', 'account suspended'
-        ];
-        
+        let spamKeywords = ['free offer', 'free gift', 'prize', 'urgent', 'winner', 'lottery', 'viagra', 'earn money fast', 'crypto', 'giveaway', 'claim now', 'cash prize', 'jackpot', 'bank alert', 'account suspended'];
         let markedSenders = [];
-        let customCategoriesMap = {}; // Maps email -> category name
+        let customCategoriesMap = {}; 
         let companyDomains = ['amazon', 'paypal', 'netflix', 'bank', 'apple', 'google', 'microsoft'];
-        
         let longPressTimer;
         let selectedEmailId = null;
-        let isScrolling = false; // Prevent long press while scrolling
-
-        // Prevent right click
-        document.addEventListener('contextmenu', event => event.preventDefault());
+        let isScrolling = false; 
 
         // ================= GOOGLE AUTHENTICATION =================
         let tokenClient;
-
         window.onload = () => {
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: GOOGLE_CLIENT_ID,
                 scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/gmail.readonly',
                 callback: handleCredentialResponse,
             });
-
-            document.getElementById("btn-login").addEventListener("click", () => {
-                tokenClient.requestAccessToken();
-            });
+            document.getElementById("btn-login").addEventListener("click", () => tokenClient.requestAccessToken());
         };
 
         async function handleCredentialResponse(response) {
             if (response && response.access_token) {
                 accessToken = response.access_token;
                 try {
-                    const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                        headers: { Authorization: `Bearer ${accessToken}` }
-                    });
+                    const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
                     const profile = await profileRes.json();
-                    
                     currentUser = { email: profile.email };
                     document.getElementById('user-email-display').innerText = currentUser.email;
                     
@@ -259,13 +241,10 @@
                         document.getElementById('app-screen').classList.add('flex');
                         initApp();
                     }, 500);
-                } catch(e) {
-                    alert("Login failed.");
-                }
+                } catch(e) { alert("Login failed."); }
             }
         }
 
-        // ================= APP INIT & SETTINGS =================
         async function initApp() {
             await loadUserSettings();
             await loadEmailsFromFirestore();
@@ -284,7 +263,7 @@
             } catch(e) { console.log(e); }
         }
 
-        // ================= GMAIL SYNC =================
+        // ================= GMAIL SYNC & CLEANER =================
         document.getElementById('btn-sync').addEventListener('click', syncGmail);
 
         async function syncGmail() {
@@ -292,28 +271,20 @@
             showSync(true);
 
             try {
-                const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50', {
-                    headers: { Authorization: `Bearer ${accessToken}` }
-                });
+                const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=40', { headers: { Authorization: `Bearer ${accessToken}` } });
                 const listData = await listRes.json();
-                
-                if (!listRes.ok) throw new Error("API Error");
-                if (!listData.messages) { showSync(false); return; }
+                if (!listRes.ok || !listData.messages) { showSync(false); return; }
 
                 for (let msg of listData.messages) {
                     const docRef = doc(db, "users", currentUser.email, "emails", msg.id);
                     const docSnap = await getDoc(docRef);
-                    
                     if (!docSnap.exists()) {
-                        const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
-                            headers: { Authorization: `Bearer ${accessToken}` }
-                        });
+                        const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, { headers: { Authorization: `Bearer ${accessToken}` } });
                         const detailData = await detailRes.json();
                         if (!detailRes.ok) continue;
 
                         const parsedEmail = parseGmailMessage(detailData);
                         parsedEmail.category = categorizeEmail(parsedEmail);
-
                         await setDoc(docRef, parsedEmail);
                     }
                 }
@@ -322,7 +293,27 @@
             showSync(false);
         }
 
-        // ================= PARSING & CATEGORIZATION =================
+        // ✨ HTML & TEXT CLEANER (FIXED CODING/SYMBOLS ISSUE) ✨
+        function cleanEmailContent(rawText) {
+            if(!rawText) return "No text content.";
+            
+            // 1. Convert HTML to plain text safely
+            let text = rawText;
+            if(text.includes('<html') || text.includes('<!DOCTYPE') || text.includes('<body')) {
+                const doc = new DOMParser().parseFromString(text, 'text/html');
+                text = doc.body.textContent || doc.body.innerText || "";
+            }
+
+            // 2. Remove CSS/Style blocks and giant tracking links
+            text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+            text = text.replace(/\{[\s\S]*?\}/g, ''); // Remove CSS properties
+            text = text.replace(/https?:\/\/[^\s]+/g, '[Link Removed for Readability]');
+            
+            // 3. Clean up white spaces
+            text = text.replace(/\n{3,}/g, '\n\n').trim();
+            return text || "No readable content found.";
+        }
+
         function parseGmailMessage(message) {
             let subject = "(No Subject)";
             let sender = "(Unknown Sender)";
@@ -336,16 +327,22 @@
                 });
             }
 
-            let body = "No text content available.";
-            if (message.payload) {
-                if (message.payload.parts) {
-                    let part = message.payload.parts.find(p => p.mimeType === 'text/plain');
-                    if(!part && message.payload.parts[0]?.parts) part = message.payload.parts[0].parts.find(p => p.mimeType === 'text/plain');
-                    if (part && part.body && part.body.data) body = decodeBase64(part.body.data);
-                } else if (message.payload.body && message.payload.body.data) {
-                    body = decodeBase64(message.payload.body.data);
-                }
+            let body = "";
+            // Try to find Plain Text first, then HTML
+            let part = message.payload.parts ? message.payload.parts.find(p => p.mimeType === 'text/plain') : null;
+            if(!part && message.payload.parts) part = message.payload.parts.find(p => p.mimeType === 'text/html');
+            if(!part && message.payload.parts && message.payload.parts[0]?.parts) {
+                part = message.payload.parts[0].parts.find(p => p.mimeType === 'text/plain') || message.payload.parts[0].parts.find(p => p.mimeType === 'text/html');
             }
+
+            if (part && part.body && part.body.data) {
+                body = decodeBase64(part.body.data);
+            } else if (message.payload.body && message.payload.body.data) {
+                body = decodeBase64(message.payload.body.data);
+            }
+
+            // Apply Cleaner
+            body = cleanEmailContent(body);
 
             let pureEmail = sender.toLowerCase();
             const emailMatch = sender.match(/<([^>]+)>/);
@@ -353,28 +350,21 @@
 
             return {
                 messageId: message.id, sender: sender, pureEmail: pureEmail,
-                subject: subject, body: body.substring(0, 3000), 
-                timestamp: new Date(dateStr).getTime() || Date.now(),
-                category: 'inbox' // placeholder
+                subject: subject, body: body.substring(0, 3500), 
+                timestamp: new Date(dateStr).getTime() || Date.now(), category: 'inbox'
             };
         }
 
         function decodeBase64(str) {
             try { return decodeURIComponent(escape(window.atob(str.replace(/-/g, '+').replace(/_/g, '/')))); } 
-            catch(e) { return "Unable to decode body."; }
+            catch(e) { return ""; }
         }
 
         function categorizeEmail(emailObj) {
-            // 1. Check Custom Category First
             if (customCategoriesMap[emailObj.pureEmail]) return customCategoriesMap[emailObj.pureEmail];
-
-            // 2. Check Fraud
             const textToSearch = (emailObj.subject + " " + emailObj.body).toLowerCase();
             for(let word of spamKeywords) { if(textToSearch.includes(word.toLowerCase())) return 'spam'; }
-
-            // 3. Check Important
             for(let domain of companyDomains) { if(emailObj.pureEmail.includes(domain)) return 'important'; }
-
             return 'inbox';
         }
 
@@ -387,7 +377,6 @@
             renderUI();
         }
 
-        // Scroll detection to prevent accidental long press
         document.getElementById('email-list').addEventListener('scroll', () => {
             isScrolling = true;
             clearTimeout(longPressTimer);
@@ -398,19 +387,15 @@
             const container = document.getElementById('email-list');
             container.innerHTML = '';
             
-            // Set Header
             let headerTitle = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
             if(currentTab === 'spam') headerTitle = "Fraud Emails";
             else if(currentTab === 'folders') headerTitle = "Your Folders";
             document.getElementById('header-title').innerHTML = headerTitle;
 
-            // FOLDERS VIEW
             if (currentTab === 'folders') {
                 const uniqueFolders = {};
                 allEmails.forEach(e => {
-                    if(e.category !== 'inbox' && e.category !== 'important' && e.category !== 'spam') {
-                        uniqueFolders[e.category] = (uniqueFolders[e.category] || 0) + 1;
-                    }
+                    if(!['inbox', 'important', 'spam'].includes(e.category)) uniqueFolders[e.category] = (uniqueFolders[e.category] || 0) + 1;
                 });
 
                 const foldersArr = Object.keys(uniqueFolders);
@@ -432,10 +417,7 @@
                     `;
                     el.addEventListener('click', () => {
                         currentTab = folder;
-                        // Reset nav styling
-                        document.querySelectorAll('.nav-btn').forEach(b => {
-                            b.classList.remove('text-blue-400'); b.classList.add('text-gray-400');
-                        });
+                        document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('text-blue-400'); b.classList.add('text-gray-400'); });
                         document.getElementById('header-title').innerHTML = `<button onclick="document.querySelector('[data-tab=\\'folders\\']').click()" class="mr-2 text-blue-400"><i class="fa-solid fa-arrow-left"></i></button> <span class="capitalize">${folder}</span>`;
                         renderEmailsList();
                     });
@@ -444,7 +426,6 @@
                 return;
             }
 
-            // REGULAR EMAIL LIST VIEW
             renderEmailsList();
         }
 
@@ -452,7 +433,6 @@
             const container = document.getElementById('email-list');
             let displayEmails = allEmails.filter(e => e.category === currentTab);
 
-            // Sort: Pinned first
             displayEmails.sort((a, b) => {
                 const aMarked = markedSenders.includes(a.pureEmail) ? 1 : 0;
                 const bMarked = markedSenders.includes(b.pureEmail) ? 1 : 0;
@@ -468,116 +448,82 @@
             displayEmails.forEach((email, index) => {
                 const isMarked = markedSenders.includes(email.pureEmail);
                 const el = document.createElement('div');
-                el.className = `glass p-4 rounded-xl relative animate-fade-in ${isMarked ? 'border-l-4 border-l-blue-500' : 'border-l-4 border-l-transparent'}`;
+                el.className = `glass p-4 rounded-xl relative animate-fade-in flex flex-col gap-2 ${isMarked ? 'border-l-4 border-l-blue-500' : 'border-l-4 border-l-transparent'}`;
                 el.style.animationDelay = `${index * 0.03}s`;
                 
-                const shortSubject = email.subject.length > 45 ? email.subject.substring(0, 45) + '...' : email.subject;
-                const shortPreview = email.body.substring(0, 70).replace(/\s+/g, ' ') + '...';
-                const senderName = email.sender.split('<')[0].trim();
+                const senderName = email.sender.split('<')[0].replace(/"/g, '').trim();
 
                 el.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="font-bold text-gray-100 flex items-center gap-2 text-sm md:text-base truncate pr-2">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="font-bold text-gray-100 flex items-center gap-2 text-sm md:text-base truncate flex-1">
                             ${isMarked ? '<i class="fa-solid fa-thumbtack text-blue-400 text-xs"></i>' : ''}
-                            ${senderName}
+                            <span class="truncate">${senderName}</span>
                         </div>
-                        <div class="text-[10px] text-gray-400 whitespace-nowrap mt-1">${new Date(email.timestamp).toLocaleDateString()}</div>
+                        <div class="text-[10px] text-gray-400 whitespace-nowrap pt-1">${new Date(email.timestamp).toLocaleDateString()}</div>
                     </div>
-                    <div class="text-sm font-semibold text-gray-200 mb-1 truncate">${shortSubject}</div>
-                    <div class="text-xs text-gray-500 mb-4 line-clamp-2">${shortPreview}</div>
-                    <div class="flex justify-end">
-                        <button class="bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 text-xs py-1.5 px-4 rounded-lg font-bold transition-colors btn-ai">
+                    <div class="text-sm font-semibold text-gray-200 line-clamp-1">${email.subject}</div>
+                    <div class="text-xs text-gray-500 line-clamp-2 leading-relaxed">${email.body}</div>
+                    <div class="flex justify-end mt-1">
+                        <button class="bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 text-xs py-1.5 px-4 rounded-lg font-bold transition-colors btn-ai z-10">
                             <i class="fa-solid fa-sparkles mr-1"></i> AI Summary
                         </button>
                     </div>
                 `;
 
-                // Click to Open Full Email
-                el.addEventListener('click', (e) => {
-                    if(e.target.closest('.btn-ai')) return; // Ignore if clicked on AI button
-                    openFullEmail(email);
-                });
-
-                // Long Press
+                el.addEventListener('click', (e) => { if(!e.target.closest('.btn-ai')) openFullEmail(email); });
                 el.addEventListener('touchstart', (e) => { if(!isScrolling) handleTouchStart(e, email.messageId); }, {passive: true});
                 el.addEventListener('touchend', handleTouchEnd);
                 el.addEventListener('mousedown', (e) => { handleTouchStart(e, email.messageId); });
                 el.addEventListener('mouseup', handleTouchEnd);
                 el.addEventListener('mouseleave', handleTouchEnd);
-
-                // AI Click
-                el.querySelector('.btn-ai').addEventListener('click', (e) => {
-                    e.stopPropagation(); 
-                    openSummaryModal(email);
-                });
+                el.querySelector('.btn-ai').addEventListener('click', (e) => { e.stopPropagation(); openSummaryModal(email); });
 
                 container.appendChild(el);
             });
         }
 
-        // ================= BOTTOM NAVIGATION =================
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const tab = e.currentTarget.getAttribute('data-tab');
                 if(!tab) return;
                 currentTab = tab;
-                
-                document.querySelectorAll('.nav-btn').forEach(b => {
-                    b.classList.remove('text-blue-400');
-                    b.classList.add('text-gray-400');
-                });
-                e.currentTarget.classList.add('text-blue-400');
-                e.currentTarget.classList.remove('text-gray-400');
-
+                document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('text-blue-400'); b.classList.add('text-gray-400'); });
+                e.currentTarget.classList.add('text-blue-400'); e.currentTarget.classList.remove('text-gray-400');
                 renderUI();
             });
         });
 
-        // ================= FULL EMAIL VIEW =================
         function openFullEmail(email) {
             document.getElementById('fv-subject').innerText = email.subject;
-            document.getElementById('fv-sender-name').innerText = email.sender.split('<')[0].trim();
+            document.getElementById('fv-sender-name').innerText = email.sender.split('<')[0].replace(/"/g, '').trim();
             document.getElementById('fv-sender-email').innerText = `<${email.pureEmail}>`;
             document.getElementById('fv-date').innerText = new Date(email.timestamp).toLocaleString();
             document.getElementById('fv-body').innerText = email.body;
 
             const view = document.getElementById('full-email-view');
-            view.classList.remove('hidden');
-            view.classList.add('flex');
+            view.classList.remove('hidden'); view.classList.add('flex');
         }
 
         document.getElementById('btn-close-email').addEventListener('click', () => {
-            const view = document.getElementById('full-email-view');
-            view.classList.add('hidden');
-            view.classList.remove('flex');
+            document.getElementById('full-email-view').classList.add('hidden');
+            document.getElementById('full-email-view').classList.remove('flex');
         });
 
-        // ================= LONG PRESS ACTIONS =================
         function handleTouchStart(e, msgId) {
             longPressTimer = setTimeout(() => {
                 selectedEmailId = msgId;
-                openActionModal();
+                document.getElementById('action-modal').classList.remove('hidden');
+                setTimeout(() => document.getElementById('action-box').classList.remove('scale-90', 'opacity-0'), 10);
                 if(window.navigator.vibrate) window.navigator.vibrate(50); 
             }, 600); 
         }
         function handleTouchEnd() { clearTimeout(longPressTimer); }
-
-        function openActionModal() {
-            const modal = document.getElementById('action-modal');
-            const box = document.getElementById('action-box');
-            modal.classList.remove('hidden');
-            setTimeout(() => box.classList.remove('scale-90', 'opacity-0'), 10);
-        }
-
         function closeActionModal() {
-            const modal = document.getElementById('action-modal');
-            const box = document.getElementById('action-box');
-            box.classList.add('scale-90', 'opacity-0');
-            setTimeout(() => { modal.classList.add('hidden'); selectedEmailId = null; }, 200);
+            document.getElementById('action-box').classList.add('scale-90', 'opacity-0');
+            setTimeout(() => { document.getElementById('action-modal').classList.add('hidden'); selectedEmailId = null; }, 200);
         }
 
         document.getElementById('btn-close-actions').addEventListener('click', closeActionModal);
-
         document.querySelectorAll('.action-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const action = e.currentTarget.getAttribute('data-action');
@@ -591,11 +537,8 @@
                     allEmails = allEmails.filter(e => e.messageId !== selectedEmailId);
                 } 
                 else if (action === 'mark') {
-                    if (markedSenders.includes(emailObj.pureEmail)) {
-                        markedSenders = markedSenders.filter(s => s !== emailObj.pureEmail);
-                    } else {
-                        markedSenders.push(emailObj.pureEmail);
-                    }
+                    if (markedSenders.includes(emailObj.pureEmail)) markedSenders = markedSenders.filter(s => s !== emailObj.pureEmail);
+                    else markedSenders.push(emailObj.pureEmail);
                     await setDoc(doc(db, "users", currentUser.email, "settings", "marked_senders"), { senders: markedSenders });
                 }
                 else if (action === 'fraud') {
@@ -603,75 +546,61 @@
                     await setDoc(emailRef, emailObj);
                 }
                 else if (action === 'category') {
-                    const catName = prompt("Enter Custom Category Name (e.g., Shopping, Study):");
+                    const catName = prompt("Enter Custom Folder Name (e.g., Shopping, Job):");
                     if(catName && catName.trim() !== "") {
                         const cleanName = catName.trim().toLowerCase();
                         customCategoriesMap[emailObj.pureEmail] = cleanName;
                         await setDoc(doc(db, "users", currentUser.email, "settings", "custom_categories"), { map: customCategoriesMap });
-                        
-                        // Update existing emails locally
-                        allEmails.forEach(em => {
-                            if(em.pureEmail === emailObj.pureEmail) {
-                                em.category = cleanName;
-                                setDoc(doc(db, "users", currentUser.email, "emails", em.messageId), em);
-                            }
-                        });
-                        alert(`Emails from ${emailObj.pureEmail} will now go to "${cleanName}".`);
+                        allEmails.forEach(em => { if(em.pureEmail === emailObj.pureEmail) { em.category = cleanName; setDoc(doc(db, "users", currentUser.email, "emails", em.messageId), em); } });
                     }
                 }
-
-                closeActionModal();
-                renderUI();
+                closeActionModal(); renderUI();
             });
         });
 
-        // ================= AI SUMMARY (FALLBACK SYSTEM) =================
+        // ✨ AI FALLBACK SYSTEM (USING 2 KEYS & ENDPOINTS) ✨
         async function openSummaryModal(email) {
             const modal = document.getElementById('summary-modal');
             const contentBox = document.getElementById('summary-content-box');
             const textArea = document.getElementById('ai-typing-area');
             const badge = document.getElementById('ai-model-badge');
             
-            textArea.innerHTML = `<div class="flex flex-col items-center justify-center h-full gap-4 text-blue-400">
-                <div class="loader !w-8 !h-8 border-4"></div>
-                <div class="animate-pulse font-medium">AI is reading your email...</div>
-            </div>`;
-            badge.innerText = "Gemini";
-            
+            textArea.innerHTML = `<div class="flex flex-col items-center justify-center h-full gap-4 text-blue-400"><div class="loader !w-8 !h-8 border-4"></div><div class="animate-pulse font-medium">AI is reading...</div></div>`;
+            badge.innerText = "Connecting...";
             modal.classList.remove('hidden');
             setTimeout(() => contentBox.classList.remove('translate-y-full'), 10);
 
             let summaryText = "";
-            let usedModel = "2.5-Flash";
+            let usedModelName = "";
 
             try {
-                // PRIMARY: Gemini 2.5 Flash
-                summaryText = await callGeminiAPI("gemini-2.5-flash", email.body);
+                // TRY PRIMARY KEY (2.5 Flash)
+                usedModelName = "2.5-Flash";
+                summaryText = await callGeminiAPI("gemini-2.5-flash", PRIMARY_GEMINI_API_KEY, email.body);
             } catch (err1) {
-                console.log("2.5 Failed, switching to 3.1 Pro...", err1);
+                console.log("Primary AI Failed, Switching to Fallback...", err1);
                 try {
-                    // FALLBACK: Gemini 3.1 Pro Preview
-                    usedModel = "3.1-Pro";
-                    summaryText = await callGeminiAPI("gemini-3.1-pro-preview", email.body);
+                    // TRY FALLBACK KEY (3.1 Pro Preview)
+                    usedModelName = "3.1-Pro";
+                    summaryText = await callGeminiAPI("gemini-3.1-pro-preview", FALLBACK_GEMINI_API_KEY, email.body);
                 } catch (err2) {
-                    summaryText = "❌ Failed to generate summary. AI service is temporarily unavailable or restricted.";
+                    console.log("Fallback AI also failed.", err2);
+                    usedModelName = "Error";
+                    summaryText = "❌ Failed to generate summary. Both AI models are temporarily unavailable or API keys have reached their limit.";
                 }
             }
 
-            badge.innerText = `Gemini ${usedModel}`;
+            badge.innerText = `Model: ${usedModelName}`;
             typeText(textArea, summaryText);
         }
 
-        async function callGeminiAPI(modelName, textContent) {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Summarize this email clearly in exactly 3 short bullet points:\n\n${textContent}` }] }]
-                })
+        async function callGeminiAPI(model, apiKey, textContent) {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: [{ parts: [{ text: `Summarize this email clearly in exactly 3 short bullet points:\n\n${textContent}` }] }] })
             });
             const data = await res.json();
-            if(data.error) throw new Error(data.error.message);
+            if(!res.ok || data.error) throw new Error(data.error?.message || "Unknown API Error");
             return data.candidates[0].content.parts[0].text;
         }
 
@@ -685,18 +614,11 @@
                     if(formattedText.charAt(i) === '<') {
                         let tag = "";
                         while(formattedText.charAt(i) !== '>' && i < formattedText.length){ tag += formattedText.charAt(i); i++; }
-                        tag += '>';
-                        element.innerHTML += tag;
-                        i++;
-                    } else {
-                        element.innerHTML += formattedText.charAt(i);
-                        i++;
-                    }
-                    element.scrollTop = element.scrollHeight; // Auto scroll down
+                        tag += '>'; element.innerHTML += tag; i++;
+                    } else { element.innerHTML += formattedText.charAt(i); i++; }
+                    element.scrollTop = element.scrollHeight; 
                     setTimeout(typeWriter, 15);
-                } else {
-                    element.innerHTML += '<span class="cursor-blink font-bold text-blue-500 ml-1">|</span>';
-                }
+                } else { element.innerHTML += '<span class="cursor-blink font-bold text-blue-500 ml-1">|</span>'; }
             }
             typeWriter();
         }
@@ -706,14 +628,12 @@
             setTimeout(() => document.getElementById('summary-modal').classList.add('hidden'), 300);
         });
 
-        // ================= UTILITIES =================
         function showSync(show) {
             const ind = document.getElementById('sync-indicator');
             const btnIcon = document.querySelector('#btn-sync i');
             if(show) { ind.classList.remove('hidden'); ind.classList.add('flex'); btnIcon.classList.add('fa-spin'); } 
             else { ind.classList.add('hidden'); ind.classList.remove('flex'); btnIcon.classList.remove('fa-spin'); }
         }
-
     </script>
 </body>
 </html>
