@@ -80,9 +80,14 @@
                     <h2 class="text-3xl font-bold tracking-wide flex items-center gap-3 truncate" id="header-title">Inbox</h2>
                     <p class="text-xs text-blue-400 font-medium mt-1 truncate" id="user-email-display">Loading...</p>
                 </div>
-                <button id="btn-sync" class="w-10 h-10 flex-shrink-0 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg active:scale-90 transition-transform">
-                    <i class="fa-solid fa-rotate"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button id="btn-notify-req" class="hidden w-10 h-10 rounded-full bg-red-600/20 text-red-400 items-center justify-center text-lg active:scale-90 transition-transform">
+                        <i class="fa-solid fa-bell"></i>
+                    </button>
+                    <button id="btn-sync" class="w-10 h-10 flex-shrink-0 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg active:scale-90 transition-transform">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                </div>
             </header>
 
             <div id="sync-indicator" class="hidden absolute top-28 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs px-4 py-2 rounded-full shadow-lg z-20 items-center gap-2">
@@ -107,15 +112,15 @@
             </nav>
         </div>
 
-        <!-- ================= FULL EMAIL VIEW (UPDATED FOR HTML EXACT LOOK) ================= -->
+        <!-- ================= FULL EMAIL VIEW (IFRAME HTML RENDERER) ================= -->
         <div id="full-email-view" class="hidden absolute inset-0 z-40 bg-[#0f172a] flex-col slide-in-right">
             <header class="pt-10 pb-4 px-4 glass flex items-center gap-4 sticky top-0 border-b border-gray-800 z-10 flex-shrink-0">
                 <button id="btn-close-email" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center text-xl active:scale-90 flex-shrink-0"><i class="fa-solid fa-arrow-left"></i></button>
                 <h2 class="text-xl font-bold truncate flex-1">Email View</h2>
             </header>
             
-            <div class="p-5 border-b border-gray-800 flex-shrink-0 bg-[#0f172a] select-text">
-                <h1 id="fv-subject" class="text-xl font-bold mb-4 text-white leading-snug break-words">Subject</h1>
+            <div class="p-4 border-b border-gray-800 flex-shrink-0 bg-[#0f172a] select-text">
+                <h1 id="fv-subject" class="text-xl font-bold mb-3 text-white leading-snug break-words">Subject</h1>
                 <div class="flex justify-between items-start">
                     <div class="flex-1 min-w-0 pr-4">
                         <div id="fv-sender-name" class="font-bold text-gray-200 text-base truncate">Sender Name</div>
@@ -125,8 +130,8 @@
                 </div>
             </div>
             
-            <!-- Iframe renders the exact HTML of the email with a white background like Gmail -->
-            <iframe id="fv-iframe" class="flex-1 w-full bg-white border-none pb-[20px]"></iframe>
+            <!-- MAGIC IFRAME: Ye safed (white) background ke sath actual Email HTML load karega -->
+            <iframe id="fv-iframe" class="flex-1 w-full bg-white border-none pb-[20px]" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
         </div>
 
         <!-- ================= MODALS ================= -->
@@ -159,11 +164,10 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, deleteDoc, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const GOOGLE_CLIENT_ID = "30172584711-9l229pscpqpf478qvtp2ronplmbrtha0.apps.googleusercontent.com"; 
         
-        // Base64 Encoded API Keys to hide from bots
         const PRIMARY_GEMINI_API_KEY = atob("QUl6YVN5QlhNbV82Q1lHWlBmMWd6ek9OS3gwbmlJU3lNMHl3ek1V"); 
         const FALLBACK_GEMINI_API_KEY = atob("QUl6YVN5Q0tnbWFpMk5YR01lUWpGMF8weG1SVWN4c2FUcEdkVFY0"); 
 
@@ -188,8 +192,9 @@
         let longPressTimer;
         let selectedEmailId = null;
         let isScrolling = false; 
+        let pollingInterval = null;
 
-        // ================= SESSION PERSISTENCE =================
+        // ================= SESSION =================
         window.onload = () => {
             const savedUser = localStorage.getItem('mailtick_user');
             if(savedUser) {
@@ -199,7 +204,7 @@
                 document.getElementById('app-screen').classList.remove('hidden');
                 document.getElementById('app-screen').classList.add('flex');
                 initApp(false); 
-                requestNotificationPermission(); 
+                checkNotificationPermissionStatus();
             }
 
             google.accounts.oauth2.initTokenClient({
@@ -242,8 +247,9 @@
             await loadEmailsFromFirestore();
             if(shouldSync) syncGmail(); 
             
-            // START BACKGROUND POLLING FOR NOTIFICATIONS EVERY 30 SECONDS
-            setInterval(checkNewEmailsBackground, 30000); 
+            // BACKGROUND POLLER FOR NOTIFICATIONS
+            if(pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(checkNewEmailsBackground, 20000); // Har 20 seconds me check
         }
 
         async function loadUserSettings() {
@@ -256,21 +262,34 @@
             } catch(e) {}
         }
 
-        document.getElementById('btn-sync').addEventListener('click', () => {
-            if(!accessToken) {
-                google.accounts.oauth2.initTokenClient({
-                    client_id: GOOGLE_CLIENT_ID,
-                    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/gmail.readonly',
-                    callback: handleCredentialResponse,
-                }).requestAccessToken();
-                return;
+        // ================= NOTIFICATION ENGINE =================
+        function checkNotificationPermissionStatus() {
+            if ("Notification" in window) {
+                if (Notification.permission === "default" || Notification.permission === "denied") {
+                    document.getElementById('btn-notify-req').classList.remove('hidden');
+                    document.getElementById('btn-notify-req').classList.add('flex');
+                } else {
+                    document.getElementById('btn-notify-req').classList.add('hidden');
+                }
             }
-            syncGmail();
+        }
+
+        document.getElementById('btn-notify-req').addEventListener('click', () => {
+            requestNotificationPermission();
         });
 
-        // ================= NOTIFICATION BACKGROUND POLLER =================
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                alert("This browser does not support desktop notification");
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then((permission) => {
+                    checkNotificationPermissionStatus();
+                });
+            }
+        }
+
         async function checkNewEmailsBackground() {
-            if(!accessToken) return;
+            if(!accessToken || !currentUser) return;
             try {
                 const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=3', { headers: { Authorization: `Bearer ${accessToken}` } });
                 const listData = await listRes.json();
@@ -290,12 +309,18 @@
                         parsedEmail.category = categorizeEmail(parsedEmail);
                         await setDoc(docRef, parsedEmail);
 
-                        // FIRE SYSTEM NOTIFICATION HERE
+                        // FIRE PUSH NOTIFICATION
                         if ("Notification" in window && Notification.permission === "granted") {
                             const senderName = parsedEmail.sender.split('<')[0].replace(/"/g, '').trim();
-                            new Notification(`New Email: ${senderName}`, {
-                                body: parsedEmail.subject,
-                                icon: "https://www.svgrepo.com/show/475656/google-color.svg"
+                            navigator.serviceWorker.ready.then(function(registration) {
+                                registration.showNotification(`New Email from ${senderName}`, {
+                                    body: parsedEmail.subject,
+                                    icon: "https://www.svgrepo.com/show/475656/google-color.svg",
+                                    vibrate: [200, 100, 200]
+                                });
+                            }).catch(() => {
+                                // Fallback
+                                new Notification(`New Email from ${senderName}`, { body: parsedEmail.subject });
                             });
                         }
                     }
@@ -305,6 +330,18 @@
                 }
             } catch(e) {}
         }
+
+        document.getElementById('btn-sync').addEventListener('click', () => {
+            if(!accessToken) {
+                google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/gmail.readonly',
+                    callback: handleCredentialResponse,
+                }).requestAccessToken();
+                return;
+            }
+            syncGmail();
+        });
 
         async function syncGmail() {
             showSync(true);
@@ -331,28 +368,52 @@
             showSync(false);
         }
 
-        function cleanStrictHTML(rawText) {
-            if(!rawText) return "";
+        // ================= SUPER STRONG HTML PARSER (FIX FOR TWILIO/INSTA EMAILS) =================
+        
+        // Base64Url decode with padding fix (Crucial for large emails)
+        function strongBase64Decode(str) {
+            if (!str) return "";
             try {
-                let cleanString = rawText.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-                                         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-                                         .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
-                let doc = new DOMParser().parseFromString(cleanString, 'text/html');
-                let text = doc.body.textContent || doc.body.innerText || "";
-                return text.replace(/\n\s*\n/g, '\n\n').replace(/[ \t]+/g, ' ').trim();
-            } catch(e) {
-                return rawText.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
+                str = str.replace(/-/g, '+').replace(/_/g, '/');
+                while (str.length % 4 !== 0) { str += '='; }
+                return decodeURIComponent(escape(window.atob(str)));
+            } catch (e) {
+                console.error("Decoding error");
+                return "";
             }
         }
 
-        function decodeBase64(str) {
-            try { 
-                str = str.replace(/-/g, '+').replace(/_/g, '/');
-                return decodeURIComponent(escape(window.atob(str))); 
-            } catch(e) { return ""; }
+        function extractDeepBody(payload) {
+            let htmlBody = "";
+            let plainBody = "";
+
+            // Recursive search inside email parts
+            function searchParts(parts) {
+                for (let part of parts) {
+                    if (part.mimeType === "text/html" && part.body && part.body.data) {
+                        htmlBody = strongBase64Decode(part.body.data);
+                    } else if (part.mimeType === "text/plain" && part.body && part.body.data) {
+                        plainBody = strongBase64Decode(part.body.data);
+                    }
+                    if (part.parts) {
+                        searchParts(part.parts); // Dig deeper
+                    }
+                }
+            }
+
+            if (payload.parts) {
+                searchParts(payload.parts);
+            } else if (payload.body && payload.body.data) {
+                if (payload.mimeType === "text/html") {
+                    htmlBody = strongBase64Decode(payload.body.data);
+                } else {
+                    plainBody = strongBase64Decode(payload.body.data);
+                }
+            }
+
+            return { htmlBody, plainBody };
         }
 
-        // ================= UPDATED PARSER (Extracts exact HTML for rich emails) =================
         function parseGmailMessage(message) {
             let subject = "(No Subject)";
             let sender = "(Unknown Sender)";
@@ -366,38 +427,21 @@
                 });
             }
 
-            let plainBody = "";
-            let htmlBody = "";
+            // Extract the perfect bodies
+            let { htmlBody, plainBody } = extractDeepBody(message.payload);
 
-            // Recursive function to deeply search for both plain text and HTML
-            function extractParts(parts) {
-                for(let part of parts) {
-                    if(part.mimeType === 'text/plain' && part.body && part.body.data) {
-                        plainBody = decodeBase64(part.body.data);
-                    } else if(part.mimeType === 'text/html' && part.body && part.body.data) {
-                        htmlBody = decodeBase64(part.body.data);
-                    } else if(part.parts) {
-                        extractParts(part.parts); 
-                    }
-                }
+            // Clean plain text for AI
+            if (!plainBody && htmlBody) {
+                try {
+                    let doc = new DOMParser().parseFromString(htmlBody, 'text/html');
+                    plainBody = doc.body.innerText || "";
+                } catch(e){}
             }
 
-            if (message.payload.parts) {
-                extractParts(message.payload.parts);
-            } else if (message.payload.body && message.payload.body.data) {
-                if (message.payload.mimeType === 'text/html') {
-                    htmlBody = decodeBase64(message.payload.body.data);
-                } else {
-                    plainBody = decodeBase64(message.payload.body.data);
-                }
+            // Force links in HTML to open in new tab so iframe doesn't crash
+            if(htmlBody) {
+                htmlBody = htmlBody.replace(/<a /gi, '<a target="_blank" rel="noopener noreferrer" ');
             }
-
-            // Fallback logically
-            if(!plainBody && htmlBody) plainBody = cleanStrictHTML(htmlBody);
-            if(!htmlBody && plainBody) htmlBody = `<div style="font-family:sans-serif; padding:15px; color:#111;">${plainBody.replace(/\n/g, '<br>')}</div>`;
-
-            // Make sure all links in the HTML iframe open in a new tab instead of inside the iframe
-            htmlBody = htmlBody.replace(/<a /g, '<a target="_blank" rel="noopener noreferrer" ');
 
             let pureEmail = sender.toLowerCase();
             const emailMatch = sender.match(/<([^>]+)>/);
@@ -406,8 +450,8 @@
             return {
                 messageId: message.id, sender: sender, pureEmail: pureEmail,
                 subject: subject, 
-                body: plainBody.substring(0, 3000), // AI summary ke liye plain text
-                htmlBody: htmlBody, // UI mein dikhane ke liye real HTML design
+                body: plainBody.substring(0, 3000).trim(), 
+                htmlBody: htmlBody || "", // Save actual HTML code
                 timestamp: new Date(dateStr).getTime() || Date.now(), 
                 category: 'inbox'
             };
@@ -542,16 +586,22 @@
             });
         });
 
-        // ================= OPEN FULL EMAIL (WITH IFRAME FIX) =================
+        // ================= OPEN EMAIL VIEW =================
         function openFullEmail(email) {
             document.getElementById('fv-subject').innerText = email.subject;
             document.getElementById('fv-sender-name').innerText = email.sender.split('<')[0].replace(/"/g, '').trim();
             document.getElementById('fv-sender-email').innerText = `<${email.pureEmail}>`;
             document.getElementById('fv-date').innerText = new Date(email.timestamp).toLocaleString();
             
-            // Ab hum direct text nahi dal rahe, hum original HTML webpage Iframe me load kar rahe hain!
             const iframe = document.getElementById('fv-iframe');
-            iframe.srcdoc = email.htmlBody || email.body;
+            
+            // IF HTML exist, show HTML. Else, show formatted text.
+            let displayContent = email.htmlBody;
+            if(!displayContent || displayContent.trim() === "") {
+                displayContent = `<div style="font-family: Arial, sans-serif; font-size: 15px; color: #333; padding: 20px; white-space: pre-wrap; word-wrap: break-word;">${email.body}</div>`;
+            }
+            
+            iframe.srcdoc = displayContent;
 
             const view = document.getElementById('full-email-view');
             view.classList.remove('hidden'); view.classList.add('flex');
@@ -560,7 +610,7 @@
         document.getElementById('btn-close-email').addEventListener('click', () => {
             document.getElementById('full-email-view').classList.add('hidden');
             document.getElementById('full-email-view').classList.remove('flex');
-            document.getElementById('fv-iframe').srcdoc = ""; // Clear iframe memory on close
+            document.getElementById('fv-iframe').srcdoc = ""; // Clear memory
         });
 
         function handleTouchStart(e, msgId) {
@@ -599,7 +649,7 @@
                     await setDoc(emailRef, emailObj);
                 }
                 else if (action === 'category') {
-                    const catName = prompt("Enter Custom Folder Name (e.g., Shopping, Job):");
+                    const catName = prompt("Enter Custom Folder Name:");
                     if(catName && catName.trim() !== "") {
                         const cleanName = catName.trim().toLowerCase();
                         customCategoriesMap[emailObj.pureEmail] = cleanName;
@@ -626,49 +676,35 @@
             let currentModel = "gemini-2.5-flash";
             let currentApiKey = PRIMARY_GEMINI_API_KEY;
             let attempts = 0;
-            const maxAttempts = 2; 
 
-            while (attempts < maxAttempts) {
+            while (attempts < 2) {
                 try {
                     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${currentApiKey}`;
                     const response = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        // Notice here we only send `email.body` (Plain Text) to AI, NOT the heavy HTML layout
                         body: JSON.stringify({ contents: [{ parts: [{ text: `Summarize this email clearly in 3 short bullet points:\n\n${email.body}` }] }] })
                     });
                     const data = await response.json();
                     
                     if (!response.ok) {
-                        const errorMsg = data.error?.message || "";
-                        if (currentModel === "gemini-2.5-flash" && (errorMsg.includes("not found") || errorMsg.includes("demand"))) {
-                            currentModel = "gemini-3.1-pro-preview";
-                            currentApiKey = FALLBACK_GEMINI_API_KEY;
-                            attempts++;
-                            continue; 
-                        }
-                        summaryText = `API Error: ${errorMsg}`;
-                        break;
+                        currentModel = "gemini-3.1-pro-preview";
+                        currentApiKey = FALLBACK_GEMINI_API_KEY;
+                        attempts++;
+                        continue; 
                     }
 
                     if (data.candidates && data.candidates.length > 0) {
                         summaryText = data.candidates[0].content.parts[0].text;
                         break; 
-                    } else {
-                        summaryText = "API Error: No response generated.";
-                        break;
                     }
                 } catch (error) {
-                    if (currentModel === "gemini-2.5-flash" && attempts < maxAttempts - 1) { 
-                         currentModel = "gemini-3.1-pro-preview";
-                         currentApiKey = FALLBACK_GEMINI_API_KEY; 
-                         attempts++;
-                         continue;
-                    }
-                    summaryText = "Network Error: Failed to connect.";
-                    break;
+                    currentModel = "gemini-3.1-pro-preview";
+                    currentApiKey = FALLBACK_GEMINI_API_KEY; 
+                    attempts++;
                 }
             }
+            if(!summaryText) summaryText = "Failed to generate summary.";
 
             badge.innerText = currentModel.replace("gemini-", "");
             typeText(textArea, summaryText);
@@ -678,7 +714,6 @@
             element.innerHTML = '';
             let i = 0;
             const formattedText = text.replace(/\*/g, '').replace(/\n/g, '<br>');
-
             function typeWriter() {
                 if (i < formattedText.length) {
                     if(formattedText.charAt(i) === '<') {
@@ -703,17 +738,6 @@
             const btnIcon = document.querySelector('#btn-sync i');
             if(show) { ind.classList.remove('hidden'); ind.classList.add('flex'); btnIcon.classList.add('fa-spin'); } 
             else { ind.classList.add('hidden'); ind.classList.remove('flex'); btnIcon.classList.remove('fa-spin'); }
-        }
-
-        // Prompts the browser to allow notifications
-        function requestNotificationPermission() {
-            if ("Notification" in window) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") {
-                        console.log("Notification permission granted!");
-                    }
-                });
-            }
         }
 
     </script>
