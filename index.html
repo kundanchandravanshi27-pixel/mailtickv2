@@ -167,7 +167,7 @@
 
     <!-- Firebase SDKs -->
     <script type="module">
-        // AI Summary Service को अब एक अलग फ़ाइल से इम्पोर्ट किया जाएगा
+        // Import the AI service function from the separate file
         import { getAISummary } from './ai-service.js';
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -175,8 +175,8 @@
 
         const GOOGLE_CLIENT_ID = "30172584711-9l229pscpqpf478qvtp2ronplmbrtha0.apps.googleusercontent.com"; 
         
-        // ✨ OPENROUTER API KEY - यह अब ai-service.js से भी हटा दिया गया है
-        // यह कुंजी अब Vercel Serverless Function (api/ai-summary.js) द्वारा सुरक्षित रूप से मैनेज की जाएगी।
+        // ✨ OPENROUTER API KEY - MOVED TO ai-service.js
+        // The OPENROUTER_API_KEY constant has been moved to ai-service.js for better separation.
 
         const firebaseConfig = {
             apiKey: "AIzaSyDPVa0eYZpxYh6Q5vyhSf0IogTkedc72tG",
@@ -678,7 +678,7 @@
         });
 
         // ✨ AI SUMMARY ENGINE ✨
-        // AI summary API कॉल का मुख्य लॉजिक अब ai-service.js के माध्यम से एक Vercel Serverless Function को कॉल करता है।
+        // The core logic for AI summary API call has been moved to ai-service.js
         async function openSummaryModal(email) {
             const modal = document.getElementById('summary-modal');
             const contentBox = document.getElementById('summary-content-box');
@@ -690,10 +690,10 @@
             modal.classList.remove('hidden');
             setTimeout(() => contentBox.classList.remove('translate-y-full'), 10);
 
-            // बाहरी AI सेवा फ़ंक्शन को कॉल करें
+            // Call the external AI service function
             const summaryText = await getAISummary(email.body);
             
-            // मॉडल का नाम सर्वरलेस फ़ंक्शन से आना चाहिए, या यहाँ तय किया जा सकता है
+            // Assuming the model name remains constant or can be derived differently
             badge.innerText = "gpt-oss-120b:free"; 
             typeText(textArea, summaryText);
         }
