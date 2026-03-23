@@ -10,7 +10,7 @@
 // ✨ OPENROUTER API KEY (Encoded using Base64)
 // Please replace "WUFITV9BUElfS0VZX0RBTExP" with your *actual* Base64 encoded OpenRouter API key.
 // Example: If your key is "sk-12345", you would encode it to "c2stMTIzNDU=" and use atob("c2stMTIzNDU=").
-const OPENROUTER_API_KEY = atob("WUFITV9BUElfS0VZX0RBTExP"); 
+const OPENROUTER_API_KEY = atob("c2stb3ItdjEtNTE2NmZhZmZkODJlZTIzZjA2YzAwMGIyYTM5YWQ1M2UzZGZjYWUxZGJhZDNhOTgxNGE0MTEzZjA2M2UyNjhjNg=="); 
 
 /**
  * Fetches an AI summary for the given email body using the OpenRouter API.
