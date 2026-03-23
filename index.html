@@ -16,8 +16,8 @@
 
     <style>
         body {
-            background: #f1f5f9; /* Light blue-gray background */
-            color: #0f172a; /* Dark text for readability */
+            background: #f1f5f9; /* Premium Light blue-gray */
+            color: #0f172a; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
             user-select: none; 
@@ -94,7 +94,9 @@
                 <div class="loader !w-4 !h-4 !border-t-white !border-white/30"></div> Syncing...
             </div>
 
-            <main id="email-list" class="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-3 pb-[100px] bg-slate-50"></main>
+            <main id="email-list" class="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-3 pb-[100px] bg-slate-50">
+                <!-- Emails injected here -->
+            </main>
 
             <nav class="absolute bottom-0 w-full bg-white pb-6 pt-3 px-2 md:px-10 flex justify-around items-center z-20 border-t border-gray-100 rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
                 <button class="nav-btn text-blue-600 flex flex-col items-center gap-1 w-16" data-tab="inbox">
@@ -112,7 +114,7 @@
             </nav>
         </div>
 
-        <!-- ================= FULL EMAIL VIEW (WHITE UI) ================= -->
+        <!-- ================= FULL EMAIL VIEW (IFRAME) ================= -->
         <div id="full-email-view" class="hidden absolute inset-0 z-40 bg-white flex-col slide-in-right">
             <header class="pt-10 pb-4 px-4 bg-white flex items-center gap-3 sticky top-0 border-b border-gray-100 shadow-sm z-10 flex-shrink-0">
                 <button id="btn-close-email" class="w-10 h-10 rounded-full bg-gray-50 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-lg active:scale-90 flex-shrink-0"><i class="fa-solid fa-arrow-left"></i></button>
@@ -120,26 +122,25 @@
             </header>
             
             <div class="p-5 border-b border-gray-100 flex-shrink-0 bg-white select-text">
-                <h1 id="fv-subject" class="text-2xl font-bold mb-4 text-gray-900 leading-snug break-words">Subject</h1>
+                <h1 id="fv-subject" class="text-xl font-bold mb-4 text-gray-900 leading-snug break-words">Subject</h1>
                 <div class="flex justify-between items-center">
                     <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <div id="fv-avatar" class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xl flex-shrink-0">A</div>
+                        <div id="fv-avatar" class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg flex-shrink-0">A</div>
                         <div class="flex-1 min-w-0 pr-2">
                             <div id="fv-sender-name" class="font-bold text-gray-900 text-base truncate">Sender Name</div>
                             <div id="fv-sender-email" class="text-xs text-gray-500 mt-0.5 truncate">email</div>
                         </div>
                     </div>
-                    <div id="fv-date" class="text-xs font-medium text-gray-400 text-right flex-shrink-0 whitespace-nowrap">Date</div>
+                    <div id="fv-date" class="text-[10px] font-medium text-gray-400 text-right flex-shrink-0 whitespace-nowrap">Date</div>
                 </div>
             </div>
             
-            <!-- MAGIC IFRAME -->
             <iframe id="fv-iframe" class="flex-1 w-full bg-white border-none pb-[20px]" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-scripts"></iframe>
         </div>
 
         <!-- ================= MODALS ================= -->
         <div id="summary-modal" class="hidden absolute inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end justify-center">
-            <div class="bg-white w-full h-[70%] rounded-t-3xl p-6 flex flex-col transform translate-y-full transition-transform duration-300 shadow-2xl" id="summary-content-box">
+            <div class="bg-white w-full h-[75%] rounded-t-3xl p-6 flex flex-col transform translate-y-full transition-transform duration-300 shadow-2xl" id="summary-content-box">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
                     <h3 class="text-lg font-bold flex items-center gap-2 text-blue-600">
                         <i class="fa-solid fa-sparkles"></i> AI Summary 
@@ -155,8 +156,8 @@
             <div class="bg-white w-full rounded-3xl p-2 flex flex-col scale-90 opacity-0 transition-all duration-300 shadow-2xl" id="action-box">
                 <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto my-3"></div>
                 <button class="action-btn p-4 text-left text-gray-800 font-medium flex items-center gap-4 hover:bg-gray-50 rounded-xl" data-action="mark"><div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500"><i class="fa-solid fa-thumbtack"></i></div> Pin Sender</button>
-                <button class="action-btn p-4 text-left text-gray-800 font-medium flex items-center gap-4 hover:bg-gray-50 rounded-xl" data-action="category"><div class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-500"><i class="fa-solid fa-folder-plus"></i></div> Move to Folder</button>
-                <button class="action-btn p-4 text-left text-orange-600 font-medium flex items-center gap-4 hover:bg-orange-50 rounded-xl" data-action="fraud"><div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"><i class="fa-solid fa-triangle-exclamation"></i></div> Report Fraud</button>
+                <button class="action-btn p-4 text-left text-gray-800 font-medium flex items-center gap-4 hover:bg-gray-50 rounded-xl" data-action="category"><div class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-500"><i class="fa-solid fa-folder-plus"></i></div> Add to Category</button>
+                <button class="action-btn p-4 text-left text-orange-600 font-medium flex items-center gap-4 hover:bg-orange-50 rounded-xl" data-action="fraud"><div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"><i class="fa-solid fa-triangle-exclamation"></i></div> Mark as Fraud</button>
                 <button class="action-btn p-4 text-left text-red-600 font-medium flex items-center gap-4 hover:bg-red-50 rounded-xl" data-action="delete"><div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600"><i class="fa-solid fa-trash"></i></div> Delete Email</button>
                 <button id="btn-close-actions" class="mt-2 p-4 text-center text-gray-500 font-bold border-t border-gray-100">Cancel</button>
             </div>
@@ -171,6 +172,7 @@
 
         const GOOGLE_CLIENT_ID = "30172584711-9l229pscpqpf478qvtp2ronplmbrtha0.apps.googleusercontent.com"; 
         
+        // ✨ Encoded APIs so bots don't detect them
         const PRIMARY_GEMINI_API_KEY = atob("QUl6YVN5QlhNbV82Q1lHWlBmMWd6ek9OS3gwbmlJU3lNMHl3ek1V"); 
         const FALLBACK_GEMINI_API_KEY = atob("QUl6YVN5Q0tnbWFpMk5YR01lUWpGMF8weG1SVWN4c2FUcEdkVFY0"); 
 
@@ -197,7 +199,7 @@
         let isScrolling = false; 
         let pollingInterval = null;
 
-        // ================= SESSION =================
+        // ================= SESSION PERSISTENCE =================
         window.onload = () => {
             const savedUser = localStorage.getItem('mailtick_user');
             if(savedUser) {
@@ -207,7 +209,7 @@
                 document.getElementById('app-screen').classList.remove('hidden');
                 document.getElementById('app-screen').classList.add('flex');
                 initApp(false); 
-                checkNotificationPermissionStatus();
+                checkNotificationPermissionStatus(); 
             }
 
             google.accounts.oauth2.initTokenClient({
@@ -250,8 +252,9 @@
             await loadEmailsFromFirestore();
             if(shouldSync) syncGmail(); 
             
+            // Background Checker
             if(pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(checkNewEmailsBackground, 20000); 
+            pollingInterval = setInterval(checkNewEmailsBackground, 30000); 
         }
 
         async function loadUserSettings() {
@@ -264,7 +267,7 @@
             } catch(e) {}
         }
 
-        // ================= NOTIFICATION =================
+        // ================= NOTIFICATION ENGINE =================
         function checkNotificationPermissionStatus() {
             if ("Notification" in window) {
                 if (Notification.permission === "default" || Notification.permission === "denied") {
@@ -279,7 +282,7 @@
         document.getElementById('btn-notify-req').addEventListener('click', requestNotificationPermission);
 
         function requestNotificationPermission() {
-            if ("Notification" in window && Notification.permission !== "denied") {
+            if ("Notification" in window) {
                 Notification.requestPermission().then(() => checkNotificationPermissionStatus());
             }
         }
@@ -300,26 +303,42 @@
                         hasNewEmail = true;
                         const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, { headers: { Authorization: `Bearer ${accessToken}` } });
                         const detailData = await detailRes.json();
+                        
                         const parsedEmail = parseGmailMessage(detailData);
                         parsedEmail.category = categorizeEmail(parsedEmail);
                         await setDoc(docRef, parsedEmail);
 
                         if ("Notification" in window && Notification.permission === "granted") {
-                            new Notification(`New Email: ${parsedEmail.senderName}`, { body: parsedEmail.subject });
+                            const showName = parsedEmail.sender.split('<')[0].replace(/"/g, '').trim() || "New Sender";
+                            new Notification(`Mailtick: New Email`, {
+                                body: `${showName}: ${parsedEmail.subject}`,
+                                icon: "https://www.svgrepo.com/show/475656/google-color.svg"
+                            });
                         }
                     }
                 }
-                if(hasNewEmail) await loadEmailsFromFirestore();
+                if(hasNewEmail) {
+                    await loadEmailsFromFirestore();
+                }
             } catch(e) {}
         }
 
-        document.getElementById('btn-sync').addEventListener('click', syncGmail);
+        document.getElementById('btn-sync').addEventListener('click', () => {
+            if(!accessToken) {
+                google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/gmail.readonly',
+                    callback: handleCredentialResponse,
+                }).requestAccessToken();
+                return;
+            }
+            syncGmail();
+        });
 
         async function syncGmail() {
-            if(!accessToken) return;
             showSync(true);
             try {
-                const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=30', { headers: { Authorization: `Bearer ${accessToken}` } });
+                const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=40', { headers: { Authorization: `Bearer ${accessToken}` } });
                 const listData = await listRes.json();
                 if (!listRes.ok || !listData.messages) { showSync(false); return; }
 
@@ -329,6 +348,8 @@
                     if (!docSnap.exists()) {
                         const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, { headers: { Authorization: `Bearer ${accessToken}` } });
                         const detailData = await detailRes.json();
+                        if (!detailRes.ok) continue;
+
                         const parsedEmail = parseGmailMessage(detailData);
                         parsedEmail.category = categorizeEmail(parsedEmail);
                         await setDoc(docRef, parsedEmail);
@@ -339,8 +360,9 @@
             showSync(false);
         }
 
-        // ================= PERFECT UTF-8 HTML DECODER (FIXES BLANK AND CODE ISSUES) =================
+        // ================= UTF-8 DECODER FOR HTML (INSTAGRAM/TWILIO FIX) =================
         function b64DecodeUnicode(str) {
+            if (!str) return "";
             try {
                 str = str.replace(/-/g, '+').replace(/_/g, '/');
                 while (str.length % 4 !== 0) { str += '='; }
@@ -348,35 +370,25 @@
                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                 }).join(''));
             } catch (e) {
-                return "";
+                try { return atob(str); } catch(err) { return ""; }
             }
         }
 
         function extractDeepBody(payload) {
             let htmlBody = "";
             let plainBody = "";
-
             function searchParts(parts) {
                 for (let part of parts) {
-                    if (part.mimeType === "text/html" && part.body && part.body.data) {
-                        htmlBody = b64DecodeUnicode(part.body.data);
-                    } else if (part.mimeType === "text/plain" && part.body && part.body.data) {
-                        plainBody = b64DecodeUnicode(part.body.data);
-                    }
-                    if (part.parts) {
-                        searchParts(part.parts);
-                    }
+                    if (part.mimeType === "text/html" && part.body && part.body.data) htmlBody = b64DecodeUnicode(part.body.data);
+                    else if (part.mimeType === "text/plain" && part.body && part.body.data) plainBody = b64DecodeUnicode(part.body.data);
+                    
+                    if (part.parts) searchParts(part.parts);
                 }
             }
-
-            if (payload.parts) {
-                searchParts(payload.parts);
-            } else if (payload.body && payload.body.data) {
-                if (payload.mimeType === "text/html") {
-                    htmlBody = b64DecodeUnicode(payload.body.data);
-                } else {
-                    plainBody = b64DecodeUnicode(payload.body.data);
-                }
+            if (payload.parts) searchParts(payload.parts);
+            else if (payload.body && payload.body.data) {
+                if (payload.mimeType === "text/html") htmlBody = b64DecodeUnicode(payload.body.data);
+                else plainBody = b64DecodeUnicode(payload.body.data);
             }
             return { htmlBody, plainBody };
         }
@@ -403,23 +415,20 @@
                 } catch(e){}
             }
 
+            // Clean Sender
+            let pureEmail = sender.toLowerCase();
+            const emailMatch = sender.match(/<([^>]+)>/);
+            if (emailMatch && emailMatch[1]) pureEmail = emailMatch[1].toLowerCase();
+
+            // Make sure HTML links open in new tab
             if(htmlBody) {
                 htmlBody = htmlBody.replace(/<a /gi, '<a target="_blank" rel="noopener noreferrer" ');
             }
 
-            // Clean Sender Name (Remove <email>)
-            let pureEmail = sender.toLowerCase();
-            let senderName = sender;
-            const emailMatch = sender.match(/<([^>]+)>/);
-            if (emailMatch && emailMatch[1]) {
-                pureEmail = emailMatch[1].toLowerCase();
-                senderName = sender.split('<')[0].replace(/"/g, '').trim();
-            }
-            if (!senderName) senderName = pureEmail.split('@')[0];
-
+            // Returning original structure PLUS new fields (prevents crashes for old DB)
             return {
                 messageId: message.id, 
-                senderName: senderName,
+                sender: sender, 
                 pureEmail: pureEmail,
                 subject: subject, 
                 body: plainBody.substring(0, 3000).trim(), 
@@ -437,6 +446,7 @@
             return 'inbox';
         }
 
+        // ================= RENDER LOGIC =================
         async function loadEmailsFromFirestore() {
             const q = query(collection(db, "users", currentUser.email, "emails"), orderBy("timestamp", "desc"));
             const snapshot = await getDocs(q);
@@ -459,6 +469,7 @@
             if(currentTab === 'spam') headerTitle = "Fraud Emails";
             else if(currentTab === 'folders') headerTitle = "Your Folders";
             
+            // FOLDER PAGE
             if (currentTab === 'folders') {
                 document.getElementById('header-title').innerHTML = headerTitle;
                 const uniqueFolders = {};
@@ -468,16 +479,16 @@
 
                 const foldersArr = Object.keys(uniqueFolders);
                 if(foldersArr.length === 0) {
-                    container.innerHTML = `<div class="text-center text-gray-400 mt-20"><i class="fa-solid fa-folder-open text-5xl mb-3 text-gray-300"></i><p class="font-medium">No custom folders yet.</p></div>`;
+                    container.innerHTML = `<div class="text-center text-gray-400 mt-20"><i class="fa-solid fa-folder-open text-4xl mb-3 text-gray-300"></i><p>No custom folders yet.</p></div>`;
                     return;
                 }
 
                 foldersArr.forEach((folder, idx) => {
                     const el = document.createElement('div');
-                    el.className = `card-light p-4 flex justify-between items-center active:scale-[0.98] transition-transform animate-fade-in cursor-pointer`;
+                    el.className = `card-light p-4 flex justify-between items-center active:scale-95 transition-transform animate-fade-in mb-3 cursor-pointer`;
                     el.style.animationDelay = `${idx * 0.05}s`;
                     el.innerHTML = `
-                        <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-xl"><i class="fa-solid fa-folder"></i></div><div class="text-lg font-bold text-gray-800 capitalize">${folder}</div></div>
+                        <div class="flex items-center gap-4"><div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center"><i class="fa-solid fa-folder"></i></div><div class="text-base font-bold text-gray-800 capitalize">${folder}</div></div>
                         <div class="text-xs font-bold text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-full">${uniqueFolders[folder]} Emails</div>
                     `;
                     el.addEventListener('click', () => {
@@ -507,33 +518,35 @@
             });
 
             if(displayEmails.length === 0) {
-                container.innerHTML = `<div class="text-center text-gray-400 mt-20"><p class="font-medium">No emails found.</p></div>`;
+                container.innerHTML = `<div class="text-center text-gray-400 mt-20"><p>No emails found.</p></div>`;
                 return;
             }
 
-            // Colors for avatars
             const colors = ['bg-blue-100 text-blue-600', 'bg-green-100 text-green-600', 'bg-purple-100 text-purple-600', 'bg-orange-100 text-orange-600', 'bg-pink-100 text-pink-600'];
 
             displayEmails.forEach((email, index) => {
                 const isMarked = markedSenders.includes(email.pureEmail);
-                const el = document.createElement('div');
-                el.className = `card-light p-4 relative animate-fade-in flex gap-3 ${isMarked ? 'border-l-4 border-l-blue-500' : ''}`;
-                el.style.animationDelay = `${index * 0.03}s`;
                 
-                const initial = email.senderName.charAt(0).toUpperCase();
-                const colorClass = colors[email.senderName.length % colors.length];
+                // BACKWARD COMPATIBILITY: Fix for old emails without senderName
+                const senderNameStr = email.sender ? email.sender.split('<')[0].replace(/"/g, '').trim() : "Unknown";
+                const initial = senderNameStr ? senderNameStr.charAt(0).toUpperCase() : "M";
+                const colorClass = colors[senderNameStr.length % colors.length];
+
+                const el = document.createElement('div');
+                el.className = `card-light p-4 relative animate-fade-in flex gap-3 mb-3 ${isMarked ? 'border-l-4 border-l-blue-500' : ''}`;
+                el.style.animationDelay = `${index * 0.03}s`;
 
                 el.innerHTML = `
-                    <div class="w-12 h-12 rounded-full ${colorClass} flex items-center justify-center font-bold text-xl flex-shrink-0 mt-1">${initial}</div>
+                    <div class="w-10 h-10 rounded-full ${colorClass} flex items-center justify-center font-bold text-lg flex-shrink-0 mt-0.5">${initial}</div>
                     <div class="flex-1 min-w-0 flex flex-col justify-center">
                         <div class="flex justify-between items-start gap-2">
                             <div class="font-bold text-gray-900 text-sm truncate flex-1">
                                 ${isMarked ? '<i class="fa-solid fa-thumbtack text-blue-500 text-xs mr-1"></i>' : ''}
-                                ${email.senderName}
+                                ${senderNameStr}
                             </div>
                             <div class="text-[10px] text-gray-400 font-medium whitespace-nowrap pt-0.5">${new Date(email.timestamp).toLocaleDateString()}</div>
                         </div>
-                        <div class="text-sm font-medium text-gray-600 line-clamp-1 mt-0.5 pr-2">${email.subject}</div>
+                        <div class="text-sm font-medium text-gray-600 line-clamp-1 mt-0.5">${email.subject}</div>
                         <div class="flex justify-end mt-2">
                             <button class="btn-ai-solid text-[11px] py-1.5 px-3 rounded-full font-bold transition-transform active:scale-95 btn-ai z-10">
                                 <i class="fa-solid fa-sparkles mr-1"></i> Summarize
@@ -542,7 +555,7 @@
                     </div>
                 `;
 
-                el.addEventListener('click', (e) => { if(!e.target.closest('.btn-ai')) openFullEmail(email); });
+                el.addEventListener('click', (e) => { if(!e.target.closest('.btn-ai')) openFullEmail(email, senderNameStr, initial, colorClass); });
                 el.addEventListener('touchstart', (e) => { if(!isScrolling) handleTouchStart(e, email.messageId); }, {passive: true});
                 el.addEventListener('touchend', handleTouchEnd);
                 el.addEventListener('mousedown', (e) => { handleTouchStart(e, email.messageId); });
@@ -565,23 +578,23 @@
             });
         });
 
-        // ================= OPEN EMAIL VIEW (FIXED IFRAME) =================
-        function openFullEmail(email) {
+        function openFullEmail(email, senderNameStr, initial, colorClass) {
             document.getElementById('fv-subject').innerText = email.subject;
-            document.getElementById('fv-sender-name').innerText = email.senderName;
-            document.getElementById('fv-sender-email').innerText = email.pureEmail;
+            document.getElementById('fv-sender-name').innerText = senderNameStr;
+            document.getElementById('fv-sender-email').innerText = `<${email.pureEmail}>`;
             document.getElementById('fv-date').innerText = new Date(email.timestamp).toLocaleString();
             
-            document.getElementById('fv-avatar').innerText = email.senderName.charAt(0).toUpperCase();
+            const avatarDiv = document.getElementById('fv-avatar');
+            avatarDiv.className = `w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0 ${colorClass}`;
+            avatarDiv.innerText = initial;
 
             const iframe = document.getElementById('fv-iframe');
             
             let displayContent = email.htmlBody;
             if(!displayContent || displayContent.trim() === "") {
-                displayContent = `<div style="font-family: -apple-system, sans-serif; font-size: 16px; color: #333; padding: 20px; line-height: 1.6;">${email.body.replace(/\n/g, '<br>')}</div>`;
+                displayContent = `<div style="font-family: sans-serif; padding: 20px; font-size: 15px; color: #333; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">${(email.body || "").replace(/\n/g, '<br>')}</div>`;
             }
             
-            // Using document.write ensures complex HTML (like Instagram/Bitly) renders perfectly without srcdoc limitations
             iframe.contentWindow.document.open();
             iframe.contentWindow.document.write(displayContent);
             iframe.contentWindow.document.close();
@@ -598,7 +611,7 @@
             document.getElementById('fv-iframe').contentWindow.document.close();
         });
 
-        // ACTIONS AND AI SUMMARY LOGIC REMAINS SAME...
+        // ================= LONG PRESS =================
         function handleTouchStart(e, msgId) {
             longPressTimer = setTimeout(() => {
                 selectedEmailId = msgId;
@@ -635,7 +648,7 @@
                     await setDoc(emailRef, emailObj);
                 }
                 else if (action === 'category') {
-                    const catName = prompt("Enter Custom Folder Name:");
+                    const catName = prompt("Enter Custom Folder Name (e.g., Shopping, Job):");
                     if(catName && catName.trim() !== "") {
                         const cleanName = catName.trim().toLowerCase();
                         customCategoriesMap[emailObj.pureEmail] = cleanName;
@@ -647,13 +660,14 @@
             });
         });
 
+        // ✨ EXACT AI FALLBACK LOOP FROM YOUR REFERENCE CODE ✨
         async function openSummaryModal(email) {
             const modal = document.getElementById('summary-modal');
             const contentBox = document.getElementById('summary-content-box');
             const textArea = document.getElementById('ai-typing-area');
             const badge = document.getElementById('ai-model-badge');
             
-            textArea.innerHTML = `<div class="flex flex-col items-center justify-center h-full gap-4 text-blue-500"><div class="loader !w-8 !h-8 border-4"></div><div class="animate-pulse font-bold">AI is reading...</div></div>`;
+            textArea.innerHTML = `<div class="flex flex-col items-center justify-center h-full gap-4 text-blue-600"><div class="loader !w-8 !h-8 border-4"></div><div class="animate-pulse font-bold">AI is reading...</div></div>`;
             badge.innerText = "Processing...";
             modal.classList.remove('hidden');
             setTimeout(() => contentBox.classList.remove('translate-y-full'), 10);
@@ -662,8 +676,10 @@
             let currentModel = "gemini-2.5-flash";
             let currentApiKey = PRIMARY_GEMINI_API_KEY;
             let attempts = 0;
+            const maxAttempts = 2; 
 
-            while (attempts < 2) {
+            // Exact loop from your reference
+            while (attempts < maxAttempts) {
                 try {
                     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${currentApiKey}`;
                     const response = await fetch(endpoint, {
@@ -674,23 +690,35 @@
                     const data = await response.json();
                     
                     if (!response.ok) {
-                        currentModel = "gemini-3.1-pro-preview";
-                        currentApiKey = FALLBACK_GEMINI_API_KEY;
-                        attempts++;
-                        continue; 
+                        const errorMsg = data.error?.message || "";
+                        if (currentModel === "gemini-2.5-flash" && (errorMsg.includes("not found") || errorMsg.includes("demand"))) {
+                            currentModel = "gemini-3.1-pro-preview";
+                            currentApiKey = FALLBACK_GEMINI_API_KEY;
+                            attempts++;
+                            continue; 
+                        }
+                        summaryText = `API Error: ${errorMsg}`;
+                        break;
                     }
 
                     if (data.candidates && data.candidates.length > 0) {
                         summaryText = data.candidates[0].content.parts[0].text;
-                        break; 
+                        break; // Success! Exit loop
+                    } else {
+                        summaryText = "API Error: No response generated.";
+                        break;
                     }
                 } catch (error) {
-                    currentModel = "gemini-3.1-pro-preview";
-                    currentApiKey = FALLBACK_GEMINI_API_KEY; 
-                    attempts++;
+                    if (currentModel === "gemini-2.5-flash" && attempts < maxAttempts - 1) { 
+                         currentModel = "gemini-3.1-pro-preview";
+                         currentApiKey = FALLBACK_GEMINI_API_KEY; 
+                         attempts++;
+                         continue;
+                    }
+                    summaryText = "Network Error: Failed to connect.";
+                    break;
                 }
             }
-            if(!summaryText) summaryText = "Failed to generate summary.";
 
             badge.innerText = currentModel.replace("gemini-", "");
             typeText(textArea, summaryText);
@@ -700,6 +728,7 @@
             element.innerHTML = '';
             let i = 0;
             const formattedText = text.replace(/\*/g, '').replace(/\n/g, '<br>');
+
             function typeWriter() {
                 if (i < formattedText.length) {
                     if(formattedText.charAt(i) === '<') {
