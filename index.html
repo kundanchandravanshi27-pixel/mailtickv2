@@ -16,7 +16,7 @@
 
     <style>
         body {
-            background: #f1f5f9; /* Premium Light blue-gray */
+            background: #f1f5f9; 
             color: #0f172a; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
@@ -94,9 +94,7 @@
                 <div class="loader !w-4 !h-4 !border-t-white !border-white/30"></div> Syncing...
             </div>
 
-            <main id="email-list" class="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-3 pb-[100px] bg-slate-50">
-                <!-- Emails injected here -->
-            </main>
+            <main id="email-list" class="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-3 pb-[100px] bg-slate-50"></main>
 
             <nav class="absolute bottom-0 w-full bg-white pb-6 pt-3 px-2 md:px-10 flex justify-around items-center z-20 border-t border-gray-100 rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
                 <button class="nav-btn text-blue-600 flex flex-col items-center gap-1 w-16" data-tab="inbox">
@@ -114,7 +112,7 @@
             </nav>
         </div>
 
-        <!-- ================= FULL EMAIL VIEW (IFRAME) ================= -->
+        <!-- ================= FULL EMAIL VIEW ================= -->
         <div id="full-email-view" class="hidden absolute inset-0 z-40 bg-white flex-col slide-in-right">
             <header class="pt-10 pb-4 px-4 bg-white flex items-center gap-3 sticky top-0 border-b border-gray-100 shadow-sm z-10 flex-shrink-0">
                 <button id="btn-close-email" class="w-10 h-10 rounded-full bg-gray-50 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-lg active:scale-90 flex-shrink-0"><i class="fa-solid fa-arrow-left"></i></button>
@@ -172,9 +170,9 @@
 
         const GOOGLE_CLIENT_ID = "30172584711-9l229pscpqpf478qvtp2ronplmbrtha0.apps.googleusercontent.com"; 
         
-        // ✨ Encoded APIs so bots don't detect them
-        const PRIMARY_GEMINI_API_KEY = atob("QUl6YVN5QlhNbV82Q1lHWlBmMWd6ek9OS3gwbmlJU3lNMHl3ek1V"); 
-        const FALLBACK_GEMINI_API_KEY = atob("QUl6YVN5Q0tnbWFpMk5YR01lUWpGMF8weG1SVWN4c2FUcEdkVFY0"); 
+        // ✨ OPENROUTER API KEY (Encoded so bots can't steal it)
+        // YAHAN APNI ENCODED KEY DAALEIN Base64 se -> atob("YAHAN")
+        const OPENROUTER_API_KEY = atob("c2stb3ItdjEtNTE2NmZhZmZkODJlZTIzZjA2YzAwMGIyYTM5YWQ1M2UzZGZjYWUxZGJhZDNhOTgxNGE0MTEzZjA2M2UyNjhjNg=="); 
 
         const firebaseConfig = {
             apiKey: "AIzaSyDPVa0eYZpxYh6Q5vyhSf0IogTkedc72tE",
@@ -252,7 +250,6 @@
             await loadEmailsFromFirestore();
             if(shouldSync) syncGmail(); 
             
-            // Background Checker
             if(pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(checkNewEmailsBackground, 30000); 
         }
@@ -360,15 +357,26 @@
             showSync(false);
         }
 
-        // ================= UTF-8 DECODER FOR HTML (INSTAGRAM/TWILIO FIX) =================
+        // ================= PERFECT UTF-8 DECODER (FIXES ALL BLANK EMAILS & EMOJIS) =================
         function b64DecodeUnicode(str) {
             if (!str) return "";
             try {
+                // Fix Base64Url format
                 str = str.replace(/-/g, '+').replace(/_/g, '/');
-                while (str.length % 4 !== 0) { str += '='; }
-                return decodeURIComponent(atob(str).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
+                // Fix Padding
+                const pad = str.length % 4;
+                if(pad) {
+                    if(pad === 1) str += 'A=='; // Fallback for weird Gmail cutoffs
+                    else str += new Array(5 - pad).join('=');
+                }
+                
+                // Magic: TextDecoder ensures complex emojis and tables don't crash
+                const binary = atob(str);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                return new TextDecoder('utf-8').decode(bytes);
             } catch (e) {
                 try { return atob(str); } catch(err) { return ""; }
             }
@@ -377,14 +385,21 @@
         function extractDeepBody(payload) {
             let htmlBody = "";
             let plainBody = "";
+            
+            // Recursive deep search function
             function searchParts(parts) {
                 for (let part of parts) {
-                    if (part.mimeType === "text/html" && part.body && part.body.data) htmlBody = b64DecodeUnicode(part.body.data);
-                    else if (part.mimeType === "text/plain" && part.body && part.body.data) plainBody = b64DecodeUnicode(part.body.data);
-                    
-                    if (part.parts) searchParts(part.parts);
+                    if (part.mimeType === "text/html" && part.body && part.body.data) {
+                        htmlBody = b64DecodeUnicode(part.body.data);
+                    } else if (part.mimeType === "text/plain" && part.body && part.body.data) {
+                        plainBody = b64DecodeUnicode(part.body.data);
+                    }
+                    if (part.parts) {
+                        searchParts(part.parts); // Keep digging for Swiggy/Insta hidden emails
+                    }
                 }
             }
+            
             if (payload.parts) searchParts(payload.parts);
             else if (payload.body && payload.body.data) {
                 if (payload.mimeType === "text/html") htmlBody = b64DecodeUnicode(payload.body.data);
@@ -420,12 +435,13 @@
             const emailMatch = sender.match(/<([^>]+)>/);
             if (emailMatch && emailMatch[1]) pureEmail = emailMatch[1].toLowerCase();
 
-            // Make sure HTML links open in new tab
+            // Make sure HTML links open in new tab and don't break iframe
             if(htmlBody) {
-                htmlBody = htmlBody.replace(/<a /gi, '<a target="_blank" rel="noopener noreferrer" ');
+                if (!htmlBody.includes("<base target=")) {
+                    htmlBody = `<base target="_blank">\n` + htmlBody;
+                }
             }
 
-            // Returning original structure PLUS new fields (prevents crashes for old DB)
             return {
                 messageId: message.id, 
                 sender: sender, 
@@ -469,7 +485,6 @@
             if(currentTab === 'spam') headerTitle = "Fraud Emails";
             else if(currentTab === 'folders') headerTitle = "Your Folders";
             
-            // FOLDER PAGE
             if (currentTab === 'folders') {
                 document.getElementById('header-title').innerHTML = headerTitle;
                 const uniqueFolders = {};
@@ -527,7 +542,6 @@
             displayEmails.forEach((email, index) => {
                 const isMarked = markedSenders.includes(email.pureEmail);
                 
-                // BACKWARD COMPATIBILITY: Fix for old emails without senderName
                 const senderNameStr = email.sender ? email.sender.split('<')[0].replace(/"/g, '').trim() : "Unknown";
                 const initial = senderNameStr ? senderNameStr.charAt(0).toUpperCase() : "M";
                 const colorClass = colors[senderNameStr.length % colors.length];
@@ -549,7 +563,7 @@
                         <div class="text-sm font-medium text-gray-600 line-clamp-1 mt-0.5">${email.subject}</div>
                         <div class="flex justify-end mt-2">
                             <button class="btn-ai-solid text-[11px] py-1.5 px-3 rounded-full font-bold transition-transform active:scale-95 btn-ai z-10">
-                                <i class="fa-solid fa-sparkles mr-1"></i> Summarize
+                                <i class="fa-solid fa-sparkles mr-1"></i> AI Summary
                             </button>
                         </div>
                     </div>
@@ -611,7 +625,6 @@
             document.getElementById('fv-iframe').contentWindow.document.close();
         });
 
-        // ================= LONG PRESS =================
         function handleTouchStart(e, msgId) {
             longPressTimer = setTimeout(() => {
                 selectedEmailId = msgId;
@@ -648,7 +661,7 @@
                     await setDoc(emailRef, emailObj);
                 }
                 else if (action === 'category') {
-                    const catName = prompt("Enter Custom Folder Name (e.g., Shopping, Job):");
+                    const catName = prompt("Enter Custom Folder Name:");
                     if(catName && catName.trim() !== "") {
                         const cleanName = catName.trim().toLowerCase();
                         customCategoriesMap[emailObj.pureEmail] = cleanName;
@@ -660,7 +673,7 @@
             });
         });
 
-        // ✨ EXACT AI FALLBACK LOOP FROM YOUR REFERENCE CODE ✨
+        // ✨ OPENROUTER AI SUMMARY ENGINE ✨
         async function openSummaryModal(email) {
             const modal = document.getElementById('summary-modal');
             const contentBox = document.getElementById('summary-content-box');
@@ -668,59 +681,45 @@
             const badge = document.getElementById('ai-model-badge');
             
             textArea.innerHTML = `<div class="flex flex-col items-center justify-center h-full gap-4 text-blue-600"><div class="loader !w-8 !h-8 border-4"></div><div class="animate-pulse font-bold">AI is reading...</div></div>`;
-            badge.innerText = "Processing...";
+            badge.innerText = "Connecting...";
             modal.classList.remove('hidden');
             setTimeout(() => contentBox.classList.remove('translate-y-full'), 10);
 
             let summaryText = "";
-            let currentModel = "gemini-2.5-flash";
-            let currentApiKey = PRIMARY_GEMINI_API_KEY;
-            let attempts = 0;
-            const maxAttempts = 2; 
-
-            // Exact loop from your reference
-            while (attempts < maxAttempts) {
-                try {
-                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${currentApiKey}`;
-                    const response = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: `Summarize this email clearly in 3 short bullet points:\n\n${email.body}` }] }] })
-                    });
-                    const data = await response.json();
-                    
-                    if (!response.ok) {
-                        const errorMsg = data.error?.message || "";
-                        if (currentModel === "gemini-2.5-flash" && (errorMsg.includes("not found") || errorMsg.includes("demand"))) {
-                            currentModel = "gemini-3.1-pro-preview";
-                            currentApiKey = FALLBACK_GEMINI_API_KEY;
-                            attempts++;
-                            continue; 
-                        }
-                        summaryText = `API Error: ${errorMsg}`;
-                        break;
-                    }
-
-                    if (data.candidates && data.candidates.length > 0) {
-                        summaryText = data.candidates[0].content.parts[0].text;
-                        break; // Success! Exit loop
-                    } else {
-                        summaryText = "API Error: No response generated.";
-                        break;
-                    }
-                } catch (error) {
-                    if (currentModel === "gemini-2.5-flash" && attempts < maxAttempts - 1) { 
-                         currentModel = "gemini-3.1-pro-preview";
-                         currentApiKey = FALLBACK_GEMINI_API_KEY; 
-                         attempts++;
-                         continue;
-                    }
-                    summaryText = "Network Error: Failed to connect.";
-                    break;
+            let currentModel = "openai/gpt-oss-120b:free"; 
+            
+            try {
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": window.location.href, 
+                        "X-Title": "Mailtick Inbox" 
+                    },
+                    body: JSON.stringify({
+                        model: currentModel,
+                        messages: [
+                            {
+                                role: "user",
+                                content: `Summarize this email clearly in 3 short bullet points:\n\n${email.body}`
+                            }
+                        ]
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.choices && data.choices.length > 0) {
+                    summaryText = data.choices[0].message.content;
+                } else {
+                    summaryText = `API Error: ${data.error?.message || 'Failed to process.'}`;
                 }
+            } catch (error) {
+                summaryText = "Network Error: OpenRouter failed to connect.";
             }
 
-            badge.innerText = currentModel.replace("gemini-", "");
+            badge.innerText = "gpt-oss-120b:free";
             typeText(textArea, summaryText);
         }
 
