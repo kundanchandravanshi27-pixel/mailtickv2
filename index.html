@@ -1,5 +1,3 @@
---- START OF FILE ai_studio_code (1).html ---
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -167,19 +165,17 @@
 
     <!-- Firebase SDKs -->
     <script type="module">
-        // Import the AI service function from the separate file
-        import { getAISummary } from './ai-service.js';
-
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const GOOGLE_CLIENT_ID = "30172584711-9l229pscpqpf478qvtp2ronplmbrtha0.apps.googleusercontent.com"; 
         
-        // ✨ OPENROUTER API KEY - MOVED TO ai-service.js
-        // The OPENROUTER_API_KEY constant has been moved to ai-service.js for better separation.
+        // ✨ OPENROUTER API KEY (Encoded so bots can't steal it)
+        // YAHAN APNI ENCODED KEY DAALEIN Base64 se -> atob("YAHAN")
+        const OPENROUTER_API_KEY = atob("c2stb3ItdjEtNTE2NmZhZmZkODJlZTIzZjA2YzAwMGIyYTM5YWQ1M2UzZGZjYWUxZGJhZDNhOTgxNGE0MTEzZjA2M2UyNjhjNg=="); 
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDPVa0eYZpxYh6Q5vyhSf0IogTkedc72tG",
+            apiKey: "AIzaSyDPVa0eYZpxYh6Q5vyhSf0IogTkedc72tE",
             authDomain: "mailtick-35818.firebaseapp.com",
             projectId: "mailtick-35818",
             storageBucket: "mailtick-35818.firebasestorage.app"
@@ -677,8 +673,7 @@
             });
         });
 
-        // ✨ AI SUMMARY ENGINE ✨
-        // The core logic for AI summary API call has been moved to ai-service.js
+        // ✨ OPENROUTER AI SUMMARY ENGINE ✨
         async function openSummaryModal(email) {
             const modal = document.getElementById('summary-modal');
             const contentBox = document.getElementById('summary-content-box');
@@ -690,11 +685,41 @@
             modal.classList.remove('hidden');
             setTimeout(() => contentBox.classList.remove('translate-y-full'), 10);
 
-            // Call the external AI service function
-            const summaryText = await getAISummary(email.body);
+            let summaryText = "";
+            let currentModel = "openai/gpt-oss-120b:free"; 
             
-            // Assuming the model name remains constant or can be derived differently
-            badge.innerText = "gpt-oss-120b:free"; 
+            try {
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": window.location.href, 
+                        "X-Title": "Mailtick Inbox" 
+                    },
+                    body: JSON.stringify({
+                        model: currentModel,
+                        messages: [
+                            {
+                                role: "user",
+                                content: `Summarize this email clearly in 3 short bullet points:\n\n${email.body}`
+                            }
+                        ]
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.choices && data.choices.length > 0) {
+                    summaryText = data.choices[0].message.content;
+                } else {
+                    summaryText = `API Error: ${data.error?.message || 'Failed to process.'}`;
+                }
+            } catch (error) {
+                summaryText = "Network Error: OpenRouter failed to connect.";
+            }
+
+            badge.innerText = "gpt-oss-120b:free";
             typeText(textArea, summaryText);
         }
 
